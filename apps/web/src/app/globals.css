@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---- design tokens (The Drafter) ---- */
+
+:root {
+  --paper:     245 241 234;   /* #F5F1EA  vellum ground */
+  --paper-dim: 235 231 223;   /* #EBE7DF  raised surfaces */
+  --ink:        20  19  17;   /* #141311  graphite */
+  --sienna:   163  66  28;    /* #A3421C  single accent */
+  --trace:     31  58  95;    /* #1F3A5F  blueprint lines */
+}
+
+/* Prevent horizontal scrollbar flicker — see design-spatial §4 */
+html, body { overflow-x: clip; }
+
+html {
+  background: rgb(var(--paper));
+  color: rgb(var(--ink));
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Font-pop-in gate — display text starts invisible and fades in after fonts are ready. */
+.font-gate { opacity: 0; transition: opacity 240ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+html.fonts-ready .font-gate { opacity: 1; }
+
+/* Subtle vellum paper texture, extremely low-contrast — invisible until you squint, but
+   kills the "flat screen" feeling. Still prints clean. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(rgba(20,19,17,0.025) 1px, transparent 1px);
+  background-size: 4px 4px;
+  mix-blend-mode: multiply;
+}
+
+/* --- primitive utility classes --- */
+
+.hairline { background: rgb(var(--ink) / 0.15); }
+
+/* Focus ring: sharp sienna line, not the default blue halo */
+*:focus-visible {
+  outline: 2px solid rgb(var(--sienna));
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Reduce motion: strip all transforms/opacity transitions */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* --- type scale helpers --- */
+
+.caption {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  line-height: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: rgb(var(--ink) / 0.55);
+}
+
+.mono-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "zero" 1, "cv02" 1, "cv11" 1;
+}
