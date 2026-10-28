@@ -2,6 +2,7 @@
 and overridden in tests via app.dependency_overrides."""
 from __future__ import annotations
 
+import os
 from functools import lru_cache
 from typing import Any
 
@@ -62,8 +63,12 @@ async def current_user(authorization: str | None = Header(default=None)) -> Auth
     if not authorization or not authorization.lower().startswith("bearer "):
         raise HTTPException(status_code=401, detail="missing Bearer token")
     token = authorization.split(" ", 1)[1].strip()
+    # Signature verification is toggled by SUPABASE_JWT_VERIFY=1 so unit tests
+    # (and local dev with hand-rolled tokens) keep working. In prod the pod
+    # sets it; SUPABASE_JWT_SECRET must be present.
+    verify = os.environ.get("SUPABASE_JWT_VERIFY", "0") == "1"
+    secret = get_config().supabase_jwt_secret if verify else ""
     try:
-        # Dev mode: unverified decode. TODO M7 — tighten.
-        return decode_jwt(token, verify=False)
+        return decode_jwt(token, jwt_secret=secret, verify=verify)
     except AuthError as e:
         raise HTTPException(status_code=401, detail=str(e))

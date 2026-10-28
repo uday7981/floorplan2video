@@ -22,6 +22,9 @@ class SubmitRequest:
     start_frame_url: Optional[str] = None
     end_frame_url: Optional[str] = None
     reference_video_url: Optional[str] = None
+    # Deterministic key sent as Idempotency-Key header. Retries with the same
+    # key reuse the provider's existing job — no duplicate paid generation.
+    idempotency_key: Optional[str] = None
 
 
 @dataclass

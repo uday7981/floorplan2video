@@ -58,23 +58,35 @@ def run(*, generation_id: str, poll_interval: int = 15, timeout: int = 20 * 60) 
         end_png = storage.download(cfg.bucket_frames, shot["end_frame_path"])
 
         provider = TogetherVideoProvider()
-        req = SubmitRequest(
-            prompt=prompt,
-            resolution=gen["resolution"],
-            duration_s=duration_s,
-            start_frame_url=encode_png_data_url(start_png),
-            end_frame_url=encode_png_data_url(end_png),
-        )
-        sr = provider.submit(req)
-        db.execute(
-            "update generations set status='running', provider_job_id=%s, prompt=%s where id=%s",
-            (sr.provider_job_id, prompt, generation_id),
-        )
+
+        # Idempotency: if we already submitted this generation on a previous
+        # attempt, skip submit and resume polling. provider_job_id is set on
+        # first submit; a worker killed mid-job then retried by RQ sees it and
+        # avoids a duplicate paid request (TRD acceptance test).
+        existing = gen.get("provider_job_id")
+        if existing:
+            log.info("resuming poll on existing provider_job_id=%s", existing)
+            provider_job_id = existing
+        else:
+            req = SubmitRequest(
+                prompt=prompt,
+                resolution=gen["resolution"],
+                duration_s=duration_s,
+                start_frame_url=encode_png_data_url(start_png),
+                end_frame_url=encode_png_data_url(end_png),
+                idempotency_key=f"fpv-gen-{generation_id}",
+            )
+            sr = provider.submit(req)
+            provider_job_id = sr.provider_job_id
+            db.execute(
+                "update generations set status='running', provider_job_id=%s, prompt=%s where id=%s",
+                (provider_job_id, prompt, generation_id),
+            )
 
         start = time.time()
         while time.time() - start < timeout:
             time.sleep(poll_interval)
-            pr = provider.poll(sr.provider_job_id)
+            pr = provider.poll(provider_job_id)
             if pr.status == "succeeded":
                 r = requests.get(pr.output_url, timeout=300)
                 r.raise_for_status()
@@ -83,15 +95,21 @@ def run(*, generation_id: str, poll_interval: int = 15, timeout: int = 20 * 60) 
 
                 prices = load_prices(db)
                 cost = seedance_cost(prices, gen["resolution"], duration_s)
-                db.execute(
+                # Idempotent completion: only bump project spend if actual_cost
+                # was NULL (first time landing here). A retry that re-polled to
+                # succeeded can't double-charge the project.
+                rc = db.execute(
                     "update generations set status='succeeded', output_path=%s, "
-                    "actual_cost_usd=%s where id=%s",
+                    "actual_cost_usd=%s where id=%s and actual_cost_usd is null",
                     (take_path, cost, generation_id),
                 )
-                db.execute(
-                    "update projects set spent_usd = spent_usd + %s where id=%s",
-                    (cost, str(ctx.project_id)),
-                )
+                if rc == 1:
+                    db.execute(
+                        "update projects set spent_usd = spent_usd + %s where id=%s",
+                        (cost, str(ctx.project_id)),
+                    )
+                else:
+                    log.info("completion already recorded for %s; skipping spend bump", generation_id)
                 return
             if pr.status == "failed":
                 db.execute(

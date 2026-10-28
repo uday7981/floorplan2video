@@ -41,12 +41,18 @@ class TogetherVideoProvider:
                 {"input_image": req.end_frame_url, "frame": "last"},
             ]
         }
+        kwargs: dict = {}
+        if req.idempotency_key:
+            # Together's SDK forwards extra_headers to the HTTP layer. Retries
+            # with the same key reuse the provider's existing job.
+            kwargs["extra_headers"] = {"Idempotency-Key": req.idempotency_key}
         job = self.client.videos.create(
             model=self.model,
             prompt=req.prompt,
             resolution=req.resolution,
             seconds=str(req.duration_s),
             media=media,
+            **kwargs,
         )
         job_id = _attr_or_item(job, "id")
         return SubmitResult(provider_job_id=job_id, est_cost_usd=0.0)
