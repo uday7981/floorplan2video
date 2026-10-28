@@ -47,8 +47,12 @@ def build_scene() -> None:
     # A sun.
     bpy.ops.object.light_add(type="SUN", location=(5, -5, 10))
 
-    # Render settings
+    # read_factory_settings(use_empty=True) strips the default World; create one.
     scn = bpy.context.scene
+    if scn.world is None:
+        scn.world = bpy.data.worlds.new("World")
+
+    # Render settings
     scn.render.resolution_x = 1280
     scn.render.resolution_y = 720
     scn.render.resolution_percentage = 100
@@ -67,14 +71,15 @@ def render_workbench(out_path: Path) -> None:
 
 def render_freestyle(out_path: Path) -> None:
     scn = bpy.context.scene
-    # Freestyle runs with the EEVEE/Workbench engine; use Workbench + flat white
-    # materials so the only visible content is Freestyle lines on a white world.
-    scn.render.engine = "BLENDER_WORKBENCH"
-    scn.display.shading.light = "FLAT"
-    scn.display.shading.color_type = "SINGLE"
-    scn.display.shading.single_color = (1.0, 1.0, 1.0)
-    scn.world.color = (1.0, 1.0, 1.0)
+    # Freestyle is only supported by Cycles / EEVEE in Blender 4.x (not Workbench).
+    # EEVEE Next is the fastest path for a flat-white CAD look.
+    scn.render.engine = "BLENDER_EEVEE_NEXT"
     scn.render.use_freestyle = True
+    # White world so the only visible content is Freestyle lines on white.
+    if scn.world is None:
+        scn.world = bpy.data.worlds.new("World")
+    scn.world.use_nodes = False
+    scn.world.color = (1.0, 1.0, 1.0)
 
     rl = scn.view_layers[0]
     rl.use_freestyle = True
