@@ -59,7 +59,10 @@ def run(*, shot_id: str) -> None:
                 data = plan["plan_json"] if isinstance(plan["plan_json"], dict) else json.loads(plan["plan_json"])
                 for r in data.get("rooms", []):
                     if r["id"] == shot["room_id"]:
-                        room_type = r.get("type")
+                        # Prefer room.name (specific) over the enum type —
+                        # keeps the prompt accurate for any vocabulary even if
+                        # the RoomType enum hasn't been expanded to match.
+                        room_type = r.get("name") or r.get("type")
                         break
 
         prompt = fill_end_frame_prompt(shot["kind"], preset or {}, room_type)

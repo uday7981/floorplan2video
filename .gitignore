@@ -38,3 +38,6 @@ Thumbs.db
 .idea/
 _live_m3/
 _live_m4/
+_live_m7/
+*.mov
+Screen Recording *

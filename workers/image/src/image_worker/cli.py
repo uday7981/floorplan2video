@@ -59,7 +59,11 @@ def main(argv: list[str] | None = None) -> int:
 
     preset = shots_doc.get("style_preset", {})
 
-    # Derive room_type for room shots from the plan.
+    # Derive the free-text descriptor for the room from the plan. Preference
+    # order: room.name (specific, matches user's label) → room.type (enum
+    # fallback). The schema's RoomType enum is useful but can't cover every
+    # vocabulary, so room.name is primary — a well-named room always produces
+    # a correct image even when the type is 'other'.
     room_type = None
     if shot["kind"] == "room":
         room = next((r for r in plan["rooms"] if r["id"] == shot["room_id"]), None)
@@ -67,7 +71,7 @@ def main(argv: list[str] | None = None) -> int:
             log.error("room %s referenced by shot %s not found in plan",
                       shot["room_id"], shot["id"])
             return 2
-        room_type = room["type"]
+        room_type = room.get("name") or room.get("type")
 
     prompt = fill_end_frame_prompt(shot["kind"], preset, room_type=room_type)
     log.info("prompt: %s", prompt)

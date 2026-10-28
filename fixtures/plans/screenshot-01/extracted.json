@@ -205,7 +205,7 @@
           4.39
         ]
       ],
-      "type": "other"
+      "type": "hall"
     },
     {
       "id": "R3",
@@ -251,7 +251,7 @@
           6.56
         ]
       ],
-      "type": "other"
+      "type": "utility"
     },
     {
       "id": "R5",
@@ -305,7 +305,7 @@
           5.69
         ]
       ],
-      "type": "other"
+      "type": "office"
     },
     {
       "id": "R7",
@@ -328,7 +328,7 @@
           2.31
         ]
       ],
-      "type": "other"
+      "type": "garage"
     }
   ],
   "walls": [

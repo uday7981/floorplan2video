@@ -37,7 +37,7 @@ export type Room = {
   polygon: Array<[number, number]>;
 };
 
-export type RoomType = "living" | "kitchen" | "dining" | "bedroom" | "bath" | "terrace" | "other";
+export type RoomType = "living" | "dining" | "kitchen" | "bedroom" | "bath" | "hall" | "corridor" | "stair" | "utility" | "laundry" | "pantry" | "closet" | "storage" | "office" | "library" | "garage" | "gym" | "media" | "terrace" | "balcony" | "porch" | "other";
 
 export type ScaleSource = "dimension_text" | "scale_bar" | "user_input";
 

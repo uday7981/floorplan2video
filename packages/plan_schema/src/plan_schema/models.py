@@ -43,12 +43,40 @@ class OpeningType(str, Enum):
 
 
 class RoomType(str, Enum):
+    """Common room types the extractor + image prompt both understand.
+
+    Future-proofing: `other` is the catch-all for anything not listed. The
+    image prompt uses `room.name` (free text) as the primary descriptor —
+    so a well-named room produces a correct image even when the type here
+    is `other`. Expand this enum as architectural vocabularies grow.
+    """
+    # living / shared
     living = "living"
-    kitchen = "kitchen"
     dining = "dining"
+    kitchen = "kitchen"
+    # private rooms
     bedroom = "bedroom"
     bath = "bath"
+    # service / circulation
+    hall = "hall"
+    corridor = "corridor"
+    stair = "stair"
+    utility = "utility"
+    laundry = "laundry"
+    pantry = "pantry"
+    closet = "closet"
+    storage = "storage"
+    # home-specific
+    office = "office"
+    library = "library"
+    garage = "garage"
+    gym = "gym"
+    media = "media"
+    # outdoor-adjacent
     terrace = "terrace"
+    balcony = "balcony"
+    porch = "porch"
+    # catch-all; room.name carries the real meaning when this is used
     other = "other"
 
 
