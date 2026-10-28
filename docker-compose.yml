@@ -1,0 +1,40 @@
+# Local dev: API + the CPU-side workers.
+# Blender + edit workers run on a RunPod RTX 4090 pod (see workers/blender/README.md).
+# Redis points at Upstash in prod; a local redis container is here for offline dev only.
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    env_file: [.env]
+    ports: ["8000:8000"]
+    depends_on: [redis]
+    # TODO(decision): mount source for hot reload during dev; prod uses the built image.
+    volumes:
+      - ./apps/api:/app/apps/api
+      - ./packages/plan_schema:/app/packages/plan_schema
+      - ./prompts:/app/prompts
+
+  worker_extract:
+    build: { context: ., dockerfile: workers/extract/Dockerfile }
+    env_file: [.env]
+    depends_on: [redis]
+    command: ["rq", "worker", "extract"]
+
+  worker_image:
+    build: { context: ., dockerfile: workers/image/Dockerfile }
+    env_file: [.env]
+    depends_on: [redis]
+    command: ["rq", "worker", "end_frame"]
+
+  worker_video:
+    build: { context: ., dockerfile: workers/video/Dockerfile }
+    env_file: [.env]
+    depends_on: [redis]
+    command: ["rq", "worker", "video"]

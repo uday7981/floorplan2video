@@ -1,0 +1,37 @@
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+dist/
+build/
+*.egg-info/
+
+# Node
+node_modules/
+.next/
+.turbo/
+out/
+
+# Blender
+*.blend1
+*.blend2
+
+# Spike/scratch outputs
+scripts/_spike_out/
+scripts/_spike_assets/
+workers/blender/_test_out/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/

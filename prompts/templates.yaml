@@ -1,0 +1,68 @@
+# Versioned prompt templates. The {placeholder} values come from the project's
+# style preset and the shot being generated. Edit here; no code change needed.
+
+version: 1
+
+extraction:
+  system: |
+    You convert architectural floor plans into structured geometry.
+    Return the plan only by calling the save_plan tool. Never reply in prose.
+
+    Rules:
+    - Units are metres. Origin is the bottom-left of the building, x right, y up.
+    - Read dimension text first. If none is readable, use a scale bar. If neither
+      exists, use known_dimension_m from the user if provided. Record which in
+      meta.scale_source.
+    - Model every wall as a centreline segment with thickness. Join walls at
+      corners so endpoints match exactly.
+    - Doors, windows and open passages are openings on a wall, measured from the
+      wall's start point to the opening centre.
+    - Every labelled space becomes a room with a closed polygon inside the walls.
+    - Mark exactly one exterior door as main_entrance.
+    - If anything is guessed, lower meta.confidence and add a warning.
+
+end_frames:
+  room: |
+    Hybrid of a white CAD model and a professional photorealistic image of an
+    architecturally designed {room_type} interior, {materials}, {light}.
+    Hybrid between CAD and photorealistic. Keep the exact walls, openings,
+    camera angle and framing of the reference image. Background is {setting}.
+
+  exterior: |
+    Hybrid of a professional photorealistic image of an architecturally designed
+    home exterior, {materials}, {light}. Hybrid between CAD and photorealistic.
+    Keep the exact building massing, openings, camera angle and framing of the
+    reference image. Background is {setting}.
+
+  opening: |
+    Photorealistic architectural drawing on a wooden desk, hybrid of CAD line
+    drawing and photorealistic 3D model rising from the plan, {light}. Keep the
+    exact plan layout and camera angle of the reference image.
+
+# Seedance 2.5 forbids combining frame_images with reference_videos in a single
+# request (per Together docs 2026-10-27), so the pipeline runs in frames_only
+# mode. The "standard" variant stays here for reference / future provider.
+video:
+  frames_only: |
+    Camera {move_words} through the space, {move_detail}. Style transition from
+    CAD drawing to photorealistic, progressively. Start with the first frame and
+    finish with this exact shot: the last frame.
+
+  standard_reference_video: |
+    Use the reference video as the driving video for camera movement. Camera
+    {move_words} through the space. Style transition from CAD drawing to
+    photorealistic, progressively. Start with the first frame and finish with
+    this exact shot: the last frame.
+
+# Mapping used to fill {move_words} and {move_detail}.
+camera_moves:
+  dolly:  { words: "moves slowly forward", detail: "~1.5 m forward at eye height" }
+  pan:    { words: "pans slowly",          detail: "horizontal pan from left to right" }
+  crane:  { words: "rises slowly",         detail: "~2 m vertical rise from desk height" }
+  orbit:  { words: "orbits the building once", detail: "90° arc around the exterior" }
+
+# Default style preset, used when the project doesn't override.
+style_preset_default:
+  materials: "oak, black aluminium, natural white"
+  light: "3000K light"
+  setting: "a beautiful forest"
