@@ -10,8 +10,11 @@ insert into pricing (key, unit, usd) values
   -- until the model's real published rate lands.
   ('openai.gpt-image-1.1024x1024', 'per_image', 0.167),
   ('openai.gpt-image-1.1792x1024', 'per_image', 0.25),
-  ('openai.gpt-image-2-5.1024x1024', 'per_image', 0.167),
-  ('openai.gpt-image-2-5.1792x1024', 'per_image', 0.25),
+  -- gpt-image-2.5 real rate TBD; using gpt-image-1 "high" tier as a placeholder.
+  ('openai.gpt-image-2.5-sunburst.1024x1024', 'per_image', 0.167),
+  ('openai.gpt-image-2.5-sunburst.1792x1024', 'per_image', 0.25),
+  ('openai.gpt-image-2.5-flare.1024x1024',    'per_image', 0.167),
+  ('openai.gpt-image-2.5-flare.1792x1024',    'per_image', 0.25),
   -- Claude extraction. Pricing per Mtok (Million tokens). TODO(decision):
   -- verify Opus 5.5 rates against Anthropic docs on first live call; adjust here.
   ('anthropic.claude-opus-5-5.input',    'per_mtok', 15.00),
