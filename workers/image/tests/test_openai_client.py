@@ -9,9 +9,9 @@ def test_edit_calls_client_with_model_and_size(tiny_png_bytes, fake_openai_facto
     client = fake_openai_factory()
     editor = OpenAIImageEditor(_client=client)
     r = editor.edit(reference_png=tiny_png_bytes, prompt="x", size="1792x1024")
-    assert r.model == "gpt-image-2-5"
+    assert r.model == "gpt-image-2.5-sunburst"
     assert r.requested_size == "1792x1024"
-    assert client.calls[0]["model"] == "gpt-image-2-5"
+    assert client.calls[0]["model"] == "gpt-image-2.5-sunburst"
     assert client.calls[0]["size"] == "1792x1024"
     assert client.calls[0]["n"] == 1
 

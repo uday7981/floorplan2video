@@ -65,7 +65,7 @@ class FakeOpenAI:
 
 @pytest.fixture
 def fake_openai_factory(monkeypatch, tiny_png_bytes):
-    monkeypatch.setenv("OPENAI_IMAGE_MODEL", "gpt-image-2-5")
+    monkeypatch.setenv("OPENAI_IMAGE_MODEL", "gpt-image-2.5-sunburst")
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
 
     def make() -> FakeOpenAI:
