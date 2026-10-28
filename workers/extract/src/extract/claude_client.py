@@ -155,7 +155,10 @@ class ClaudeExtractor:
                 "description": "Save the extracted floor plan as plan JSON.",
                 "input_schema": self.tool_schema,
             }],
-            tool_choice={"type": "tool", "name": "save_plan"},
+            # Opus 5.5 (and some newer Anthropic models) reject tool_choice
+            # type "tool"/"any". Only "auto" and "none" are supported. The system
+            # prompt already instructs Claude to call save_plan and nothing else.
+            tool_choice={"type": "auto"},
             messages=messages,
         )
 

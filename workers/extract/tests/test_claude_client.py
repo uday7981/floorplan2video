@@ -16,7 +16,7 @@ def test_happy_path_no_repair(tiny_png_bytes, valid_plan, fake_anthropic_factory
     assert result.input_tokens == 100
     assert result.output_tokens == 200
     assert len(client.calls) == 1
-    assert client.calls[0]["tool_choice"] == {"type": "tool", "name": "save_plan"}
+    assert client.calls[0]["tool_choice"] == {"type": "auto"}
 
 
 def test_repair_round_on_invalid_first_response(tiny_png_bytes, valid_plan, fake_anthropic_factory):

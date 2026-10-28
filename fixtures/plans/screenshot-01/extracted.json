@@ -1,0 +1,525 @@
+{
+  "defaults": {
+    "floor_thickness": 0.2,
+    "wall_height": 2.4
+  },
+  "meta": {
+    "confidence": 0.6,
+    "scale_source": "dimension_text",
+    "warnings": [
+      "The annex is cut off at the right edge of the image, so its right wall position comes from the room dimensions.",
+      "The garage door's location is not visible, so it was left out.",
+      "Under-stair cupboard doors were left out.",
+      "Wall positions are estimated from pixels at about 77 px/m."
+    ]
+  },
+  "openings": [
+    {
+      "height": 2.0,
+      "id": "D1",
+      "main_entrance": true,
+      "offset": 4.77,
+      "sill": 0,
+      "type": "door",
+      "wall_id": "W1",
+      "width": 0.75
+    },
+    {
+      "height": 1.2,
+      "id": "WN1",
+      "offset": 4.29,
+      "sill": 0.9,
+      "type": "window",
+      "wall_id": "W1",
+      "width": 0.3
+    },
+    {
+      "height": 1.2,
+      "id": "WN2",
+      "offset": 5.4,
+      "sill": 0.9,
+      "type": "window",
+      "wall_id": "W1",
+      "width": 0.3
+    },
+    {
+      "height": 1.2,
+      "id": "WN3",
+      "offset": 1.71,
+      "sill": 0.9,
+      "type": "window",
+      "wall_id": "W1",
+      "width": 1.5
+    },
+    {
+      "height": 1.2,
+      "id": "WN4",
+      "offset": 7.66,
+      "sill": 0.9,
+      "type": "window",
+      "wall_id": "W1",
+      "width": 1.4
+    },
+    {
+      "height": 1.2,
+      "id": "WN5",
+      "offset": 0.82,
+      "sill": 0.9,
+      "type": "window",
+      "wall_id": "W3",
+      "width": 0.45
+    },
+    {
+      "height": 2.0,
+      "id": "D2",
+      "offset": 1.95,
+      "sill": 0,
+      "type": "door",
+      "wall_id": "W3",
+      "width": 0.75
+    },
+    {
+      "height": 1.2,
+      "id": "WN6",
+      "offset": 3.08,
+      "sill": 0.9,
+      "type": "window",
+      "wall_id": "W3",
+      "width": 0.55
+    },
+    {
+      "height": 0.9,
+      "id": "WN7",
+      "offset": 4.25,
+      "sill": 1.2,
+      "type": "window",
+      "wall_id": "W3",
+      "width": 0.6
+    },
+    {
+      "height": 2.0,
+      "id": "D3",
+      "offset": 5.3,
+      "sill": 0,
+      "type": "door",
+      "wall_id": "W3",
+      "width": 0.75
+    },
+    {
+      "height": 1.1,
+      "id": "WN8",
+      "offset": 7.88,
+      "sill": 1.0,
+      "type": "window",
+      "wall_id": "W3",
+      "width": 1.1
+    },
+    {
+      "height": 2.0,
+      "id": "D4",
+      "offset": 1.24,
+      "sill": 0,
+      "type": "door",
+      "wall_id": "W5",
+      "width": 0.75
+    },
+    {
+      "height": 2.0,
+      "id": "D5",
+      "offset": 2.17,
+      "sill": 0,
+      "type": "door",
+      "wall_id": "W6",
+      "width": 1.4
+    },
+    {
+      "height": 2.0,
+      "id": "D6",
+      "offset": 0.52,
+      "sill": 0,
+      "type": "door",
+      "wall_id": "W8",
+      "width": 0.7
+    },
+    {
+      "height": 2.0,
+      "id": "D7",
+      "offset": 1.55,
+      "sill": 0,
+      "type": "door",
+      "wall_id": "W7",
+      "width": 0.7
+    },
+    {
+      "height": 2.0,
+      "id": "D8",
+      "offset": 1.31,
+      "sill": 0,
+      "type": "door",
+      "wall_id": "W11",
+      "width": 0.75
+    }
+  ],
+  "rooms": [
+    {
+      "id": "R1",
+      "name": "Sitting Room",
+      "polygon": [
+        [
+          0.13,
+          0.14
+        ],
+        [
+          3.9,
+          0.14
+        ],
+        [
+          3.9,
+          6.56
+        ],
+        [
+          0.13,
+          6.56
+        ]
+      ],
+      "type": "living"
+    },
+    {
+      "id": "R2",
+      "name": "Entrance Hall",
+      "polygon": [
+        [
+          3.9,
+          0.14
+        ],
+        [
+          5.87,
+          0.14
+        ],
+        [
+          5.87,
+          4.39
+        ],
+        [
+          3.9,
+          4.39
+        ]
+      ],
+      "type": "other"
+    },
+    {
+      "id": "R3",
+      "name": "WC",
+      "polygon": [
+        [
+          3.9,
+          4.39
+        ],
+        [
+          4.99,
+          4.39
+        ],
+        [
+          4.99,
+          6.56
+        ],
+        [
+          3.9,
+          6.56
+        ]
+      ],
+      "type": "bath"
+    },
+    {
+      "id": "R4",
+      "name": "Utility",
+      "polygon": [
+        [
+          4.99,
+          4.39
+        ],
+        [
+          6.62,
+          4.39
+        ],
+        [
+          6.62,
+          6.56
+        ],
+        [
+          4.99,
+          6.56
+        ]
+      ],
+      "type": "other"
+    },
+    {
+      "id": "R5",
+      "name": "Kitchen / Dining Room",
+      "polygon": [
+        [
+          5.87,
+          0.14
+        ],
+        [
+          9.56,
+          0.14
+        ],
+        [
+          9.56,
+          6.56
+        ],
+        [
+          6.62,
+          6.56
+        ],
+        [
+          6.62,
+          3.35
+        ],
+        [
+          5.87,
+          3.35
+        ]
+      ],
+      "type": "kitchen"
+    },
+    {
+      "id": "R6",
+      "name": "Home Office",
+      "polygon": [
+        [
+          9.56,
+          2.31
+        ],
+        [
+          12.25,
+          2.31
+        ],
+        [
+          12.25,
+          5.69
+        ],
+        [
+          9.56,
+          5.69
+        ]
+      ],
+      "type": "other"
+    },
+    {
+      "id": "R7",
+      "name": "Garage",
+      "polygon": [
+        [
+          9.56,
+          0.14
+        ],
+        [
+          12.25,
+          0.14
+        ],
+        [
+          12.25,
+          2.31
+        ],
+        [
+          9.56,
+          2.31
+        ]
+      ],
+      "type": "other"
+    }
+  ],
+  "walls": [
+    {
+      "a": [
+        0.13,
+        0.14
+      ],
+      "b": [
+        9.56,
+        0.14
+      ],
+      "exterior": true,
+      "height": 2.4,
+      "id": "W1",
+      "thickness": 0.25
+    },
+    {
+      "a": [
+        9.56,
+        0.14
+      ],
+      "b": [
+        9.56,
+        6.56
+      ],
+      "exterior": true,
+      "height": 2.4,
+      "id": "W2",
+      "thickness": 0.25
+    },
+    {
+      "a": [
+        0.13,
+        6.56
+      ],
+      "b": [
+        9.56,
+        6.56
+      ],
+      "exterior": true,
+      "height": 2.4,
+      "id": "W3",
+      "thickness": 0.25
+    },
+    {
+      "a": [
+        0.13,
+        0.14
+      ],
+      "b": [
+        0.13,
+        6.56
+      ],
+      "exterior": true,
+      "height": 2.4,
+      "id": "W4",
+      "thickness": 0.25
+    },
+    {
+      "a": [
+        3.9,
+        0.14
+      ],
+      "b": [
+        3.9,
+        6.56
+      ],
+      "height": 2.4,
+      "id": "W5",
+      "thickness": 0.12
+    },
+    {
+      "a": [
+        5.87,
+        0.14
+      ],
+      "b": [
+        5.87,
+        4.39
+      ],
+      "height": 2.4,
+      "id": "W6",
+      "thickness": 0.12
+    },
+    {
+      "a": [
+        3.9,
+        4.39
+      ],
+      "b": [
+        6.62,
+        4.39
+      ],
+      "height": 2.4,
+      "id": "W7",
+      "thickness": 0.12
+    },
+    {
+      "a": [
+        4.99,
+        4.39
+      ],
+      "b": [
+        4.99,
+        6.56
+      ],
+      "height": 2.4,
+      "id": "W8",
+      "thickness": 0.1
+    },
+    {
+      "a": [
+        6.62,
+        3.35
+      ],
+      "b": [
+        6.62,
+        6.56
+      ],
+      "height": 2.4,
+      "id": "W9",
+      "thickness": 0.12
+    },
+    {
+      "a": [
+        5.87,
+        3.35
+      ],
+      "b": [
+        6.62,
+        3.35
+      ],
+      "height": 2.4,
+      "id": "W10",
+      "thickness": 0.12
+    },
+    {
+      "a": [
+        9.56,
+        5.69
+      ],
+      "b": [
+        12.25,
+        5.69
+      ],
+      "exterior": true,
+      "height": 2.4,
+      "id": "W11",
+      "thickness": 0.2
+    },
+    {
+      "a": [
+        12.25,
+        0.14
+      ],
+      "b": [
+        12.25,
+        5.69
+      ],
+      "exterior": true,
+      "height": 2.4,
+      "id": "W12",
+      "thickness": 0.2
+    },
+    {
+      "a": [
+        9.56,
+        0.14
+      ],
+      "b": [
+        12.25,
+        0.14
+      ],
+      "exterior": true,
+      "height": 2.4,
+      "id": "W13",
+      "thickness": 0.2
+    },
+    {
+      "a": [
+        9.56,
+        2.31
+      ],
+      "b": [
+        12.25,
+        2.31
+      ],
+      "height": 2.4,
+      "id": "W14",
+      "thickness": 0.12
+    }
+  ]
+}
