@@ -4,9 +4,14 @@
 insert into pricing (key, unit, usd) values
   ('together.seedance-2.5.480p', 'per_second', 0.115),
   ('together.seedance-2.5.720p', 'per_second', 0.249),
-  -- OpenAI image edit: real rate varies by output size. TODO(decision): pin to
-  -- the gpt-image-1 "medium" tier price; refresh when the model name is set.
-  ('openai.gpt-image-1.1280x720', 'per_image', 0.08),
+  -- OpenAI image edit. Pricing per output image at the requested size.
+  -- TODO(decision): verify against OpenAI's live rates on first live call;
+  -- gpt-image-1 was $0.167 at "high" quality. gpt-image-2-5 is a placeholder
+  -- until the model's real published rate lands.
+  ('openai.gpt-image-1.1024x1024', 'per_image', 0.167),
+  ('openai.gpt-image-1.1792x1024', 'per_image', 0.25),
+  ('openai.gpt-image-2-5.1024x1024', 'per_image', 0.167),
+  ('openai.gpt-image-2-5.1792x1024', 'per_image', 0.25),
   -- Claude extraction. Pricing per Mtok (Million tokens). TODO(decision):
   -- verify Opus 5.5 rates against Anthropic docs on first live call; adjust here.
   ('anthropic.claude-opus-5-5.input',    'per_mtok', 15.00),
