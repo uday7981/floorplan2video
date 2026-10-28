@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "extract"
+version = "0.1.0"
+description = "Floor-plan extraction worker — Claude vision → plan JSON."
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=0.40",
+    "Pillow>=10",
+    "pillow-heif>=0.18",
+    "pymupdf>=1.24",
+    "ezdxf>=1.3",
+    "matplotlib>=3.8",   # used by ezdxf's drawing addon to rasterise DXFs
+    "plan_schema",       # local; install with: pip install -e packages/plan_schema
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+extract = "extract.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra -q"

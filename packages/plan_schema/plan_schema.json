@@ -1,0 +1,300 @@
+{
+  "$defs": {
+    "Defaults": {
+      "additionalProperties": false,
+      "properties": {
+        "wall_height": {
+          "description": "Default wall height in metres.",
+          "exclusiveMinimum": 0,
+          "title": "Wall Height",
+          "type": "number"
+        },
+        "floor_thickness": {
+          "description": "Floor slab thickness in metres.",
+          "exclusiveMinimum": 0,
+          "title": "Floor Thickness",
+          "type": "number"
+        }
+      },
+      "required": [
+        "wall_height",
+        "floor_thickness"
+      ],
+      "title": "Defaults",
+      "type": "object"
+    },
+    "Meta": {
+      "additionalProperties": false,
+      "properties": {
+        "scale_source": {
+          "$ref": "#/$defs/ScaleSource"
+        },
+        "confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "warnings": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Warnings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "scale_source",
+        "confidence"
+      ],
+      "title": "Meta",
+      "type": "object"
+    },
+    "Opening": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "wall_id": {
+          "minLength": 1,
+          "title": "Wall Id",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/OpeningType"
+        },
+        "offset": {
+          "description": "Metres from wall start (a) to opening centre.",
+          "minimum": 0,
+          "title": "Offset",
+          "type": "number"
+        },
+        "width": {
+          "exclusiveMinimum": 0,
+          "title": "Width",
+          "type": "number"
+        },
+        "height": {
+          "exclusiveMinimum": 0,
+          "title": "Height",
+          "type": "number"
+        },
+        "sill": {
+          "description": "Height from floor to bottom of opening.",
+          "minimum": 0,
+          "title": "Sill",
+          "type": "number"
+        },
+        "main_entrance": {
+          "default": false,
+          "title": "Main Entrance",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "wall_id",
+        "type",
+        "offset",
+        "width",
+        "height",
+        "sill"
+      ],
+      "title": "Opening",
+      "type": "object"
+    },
+    "OpeningType": {
+      "enum": [
+        "door",
+        "window",
+        "opening"
+      ],
+      "title": "OpeningType",
+      "type": "string"
+    },
+    "Room": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/RoomType"
+        },
+        "polygon": {
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array"
+          },
+          "minItems": 3,
+          "title": "Polygon",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "type",
+        "polygon"
+      ],
+      "title": "Room",
+      "type": "object"
+    },
+    "RoomType": {
+      "enum": [
+        "living",
+        "kitchen",
+        "dining",
+        "bedroom",
+        "bath",
+        "terrace",
+        "other"
+      ],
+      "title": "RoomType",
+      "type": "string"
+    },
+    "ScaleSource": {
+      "enum": [
+        "dimension_text",
+        "scale_bar",
+        "user_input"
+      ],
+      "title": "ScaleSource",
+      "type": "string"
+    },
+    "Wall": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "a": {
+          "description": "Centreline start point (x, y) in metres.",
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "A",
+          "type": "array"
+        },
+        "b": {
+          "description": "Centreline end point (x, y) in metres.",
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "B",
+          "type": "array"
+        },
+        "thickness": {
+          "maximum": 0.6,
+          "minimum": 0.05,
+          "title": "Thickness",
+          "type": "number"
+        },
+        "height": {
+          "exclusiveMinimum": 0,
+          "title": "Height",
+          "type": "number"
+        },
+        "exterior": {
+          "default": false,
+          "title": "Exterior",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "a",
+        "b",
+        "thickness",
+        "height"
+      ],
+      "title": "Wall",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "units": {
+      "default": "m",
+      "pattern": "^m$",
+      "title": "Units",
+      "type": "string"
+    },
+    "meta": {
+      "$ref": "#/$defs/Meta"
+    },
+    "defaults": {
+      "$ref": "#/$defs/Defaults"
+    },
+    "walls": {
+      "items": {
+        "$ref": "#/$defs/Wall"
+      },
+      "minItems": 1,
+      "title": "Walls",
+      "type": "array"
+    },
+    "openings": {
+      "items": {
+        "$ref": "#/$defs/Opening"
+      },
+      "title": "Openings",
+      "type": "array"
+    },
+    "rooms": {
+      "items": {
+        "$ref": "#/$defs/Room"
+      },
+      "minItems": 1,
+      "title": "Rooms",
+      "type": "array"
+    }
+  },
+  "required": [
+    "meta",
+    "defaults",
+    "walls",
+    "rooms"
+  ],
+  "title": "Plan",
+  "type": "object"
+}
