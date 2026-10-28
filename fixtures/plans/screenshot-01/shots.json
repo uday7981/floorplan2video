@@ -1,0 +1,100 @@
+{
+  "project_type": "house",
+  "schema_version": "1.0",
+  "shots": [
+    {
+      "camera": {
+        "duration_s": 5,
+        "fps": 24,
+        "lens_mm": 35,
+        "move": "crane"
+      },
+      "id": "s_opening",
+      "kind": "opening",
+      "label": "Welcome",
+      "ord": 0
+    },
+    {
+      "camera": {
+        "duration_s": 8,
+        "fps": 24,
+        "lens_mm": 18,
+        "move": "dolly"
+      },
+      "id": "s_r01",
+      "kind": "room",
+      "label": "01 Sitting Room",
+      "ord": 1,
+      "room_id": "R1"
+    },
+    {
+      "camera": {
+        "duration_s": 5,
+        "fps": 24,
+        "lens_mm": 18,
+        "move": "dolly"
+      },
+      "id": "s_r02",
+      "kind": "room",
+      "label": "02 Entrance Hall",
+      "ord": 2,
+      "room_id": "R2"
+    },
+    {
+      "camera": {
+        "duration_s": 8,
+        "fps": 24,
+        "lens_mm": 18,
+        "move": "dolly"
+      },
+      "id": "s_r05",
+      "kind": "room",
+      "label": "05 Kitchen / Dining Room",
+      "ord": 3,
+      "room_id": "R5"
+    },
+    {
+      "camera": {
+        "duration_s": 5,
+        "fps": 24,
+        "lens_mm": 18,
+        "move": "dolly"
+      },
+      "id": "s_r06",
+      "kind": "room",
+      "label": "06 Home Office",
+      "ord": 4,
+      "room_id": "R6"
+    },
+    {
+      "camera": {
+        "duration_s": 5,
+        "fps": 24,
+        "lens_mm": 18,
+        "move": "dolly"
+      },
+      "id": "s_r07",
+      "kind": "room",
+      "label": "07 Garage",
+      "ord": 5,
+      "room_id": "R7"
+    },
+    {
+      "camera": {
+        "duration_s": 8,
+        "fps": 24,
+        "lens_mm": 28,
+        "move": "orbit"
+      },
+      "id": "s_exterior",
+      "kind": "exterior",
+      "label": "Exterior",
+      "ord": 6
+    }
+  ],
+  "style_preset": {
+    "light": "3000K",
+    "materials": "oak, black aluminium, natural white",
+    "setting": "a beautiful forest"
+  }
+}
