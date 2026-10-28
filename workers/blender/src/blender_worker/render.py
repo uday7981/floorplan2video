@@ -31,12 +31,18 @@ def render_driving(out_path: Path) -> Path:
     scn.render.ffmpeg.ffmpeg_preset = "GOOD"
     scn.render.ffmpeg.audio_codec = "NONE"
 
-    # FFMPEG format: Blender appends .mp4 to the filepath automatically.
+    # FFMPEG + animation: Blender names the file "<stem><start>-<end>.mp4"
+    # (e.g. driving0001-0120.mp4). Point it at the stem, then rename the
+    # produced file to the requested path.
     scn.render.filepath = str(out_path.with_suffix(""))
     bpy.ops.render.render(animation=True)
-    produced = out_path.with_suffix(".mp4")
-    if produced.exists() and produced != out_path:
-        produced.rename(out_path)
+    stem = out_path.stem
+    candidates = list(out_path.parent.glob(f"{stem}*.mp4"))
+    if candidates:
+        # If the exact file already exists keep it; else rename the first match.
+        if out_path in candidates:
+            return out_path
+        candidates[0].rename(out_path)
     return out_path
 
 

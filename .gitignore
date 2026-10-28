@@ -27,6 +27,7 @@ out/
 scripts/_spike_out/
 scripts/_spike_assets/
 workers/blender/_test_out/
+workers/blender/_m2_out/
 
 # OS
 .DS_Store

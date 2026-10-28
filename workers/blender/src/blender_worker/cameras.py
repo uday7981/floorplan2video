@@ -22,7 +22,11 @@ EXTERIOR_RADIUS_FACTOR = 0.8      # radius = factor * bbox diagonal
 EXTERIOR_RADIUS_MIN_M = 5.0
 EXTERIOR_ORBIT_DEG = 90.0
 OPENING_CRANE_RISE_M = 2.0
-OPENING_CRANE_HEIGHT_ABOVE_HOUSE_M = 5.0
+# Opening shot: 3/4 isometric establishing view. Pure top-down looks straight
+# at the roof slab (empty frame + Freestyle "strokes set empty"), so we offset
+# the camera diagonally and let TRACK_TO handle the aim.
+OPENING_OFFSET_FACTOR = 0.9       # multiplier of bbox diagonal
+OPENING_HEIGHT_ABOVE_HOUSE_M = 4.0
 
 
 def _aim_at(from_xyz, target_xyz):
@@ -56,6 +60,20 @@ def _set_scene_camera_and_range(cam, first: int, last: int):
     scn.camera = cam
     scn.frame_start = first
     scn.frame_end = last
+
+
+def _add_track_to_constraint(cam, target_xyz, name_suffix: str):
+    """Make the camera continuously aim at target_xyz. Returns the empty object
+    used as the target so animated shots keep it in sync."""
+    import bpy
+    bpy.ops.object.empty_add(location=target_xyz)
+    target = bpy.context.active_object
+    target.name = f"Target_{name_suffix}"
+    c = cam.constraints.new(type="TRACK_TO")
+    c.target = target
+    c.track_axis = "TRACK_NEGATIVE_Z"
+    c.up_axis = "UP_Y"
+    return target
 
 
 def build_room_camera(plan: dict, shot: dict):
@@ -99,8 +117,9 @@ def build_room_camera(plan: dict, shot: dict):
 
 
 def build_exterior_camera(plan: dict, shot: dict):
-    """Orbit around the building centre. Camera parented to an empty pivot;
-    pivot rotates about Z over the shot duration."""
+    """Orbit around the building centre. Camera parented to an empty pivot that
+    rotates about Z over the shot duration; TRACK_TO keeps the camera aimed at
+    the building centre regardless of pivot rotation."""
     import bpy
     bbox = building_bbox(plan["walls"])
     center, diag = bbox_center_and_diagonal(bbox)
@@ -113,12 +132,12 @@ def build_exterior_camera(plan: dict, shot: dict):
 
     start_angle = math.radians(-EXTERIOR_ORBIT_DEG / 2)
     start_pos = orbit_position(center, radius, EXTERIOR_HEIGHT_M, start_angle)
-    rot = _aim_at(start_pos, (center[0], center[1], wall_h / 2))
 
-    cam = _add_camera(start_pos, rot, shot["camera"]["lens_mm"])
+    cam = _add_camera(start_pos, (0.0, 0.0, 0.0), shot["camera"]["lens_mm"])
     cam.name = f"Cam_{shot['id']}"
     cam.parent = pivot
     cam.matrix_parent_inverse = pivot.matrix_world.inverted()
+    _add_track_to_constraint(cam, (center[0], center[1], wall_h / 2), shot["id"])
 
     first, last = _frame_range(shot["camera"])
     pivot.rotation_euler = (0.0, 0.0, 0.0)
@@ -130,26 +149,34 @@ def build_exterior_camera(plan: dict, shot: dict):
 
 
 def build_opening_camera(plan: dict, shot: dict):
-    """Top-down crane over the building. (TRD describes the source-image desk
-    + rising-model effect; that's simplified for M2 — the AI model handles
-    the stylised transition between start/end frames.)"""
+    """3/4 isometric establishing shot. (TRD describes a source-plan-on-desk +
+    rising-model effect — simplified for M2; the AI model handles the stylised
+    transition between start and end frames.)
+
+    Camera sits off to the SW of the building, well above wall height, aimed at
+    the building centre via TRACK_TO. Shot cranes up ~2 m over its duration.
+    """
     import bpy
     bbox = building_bbox(plan["walls"])
-    center, _diag = bbox_center_and_diagonal(bbox)
+    center, diag = bbox_center_and_diagonal(bbox)
     wall_h = plan["defaults"]["wall_height"]
 
-    start_z = wall_h + OPENING_CRANE_HEIGHT_ABOVE_HOUSE_M
+    offset = diag * OPENING_OFFSET_FACTOR
+    # SW diagonal → both X and Y negative offsets (sqrt(2)/2 each).
+    start_x = center[0] - offset * 0.707
+    start_y = center[1] - offset * 0.707
+    start_z = wall_h + OPENING_HEIGHT_ABOVE_HOUSE_M
     end_z = start_z + OPENING_CRANE_RISE_M
-    start_loc = (center[0], center[1], start_z)
-    end_loc = (center[0], center[1], end_z)
-    rot_down = (0.0, 0.0, 0.0)  # default cam orientation is -Z (straight down)
 
-    cam = _add_camera(start_loc, rot_down, shot["camera"]["lens_mm"])
+    cam = _add_camera((start_x, start_y, start_z), (0.0, 0.0, 0.0),
+                      shot["camera"]["lens_mm"])
     cam.name = f"Cam_{shot['id']}"
+    _add_track_to_constraint(cam, (center[0], center[1], wall_h / 2), shot["id"])
+
     first, last = _frame_range(shot["camera"])
-    cam.location = start_loc
+    cam.location = (start_x, start_y, start_z)
     _keyframe(cam, "location", first)
-    cam.location = end_loc
+    cam.location = (start_x, start_y, end_z)
     _keyframe(cam, "location", last)
     _set_scene_camera_and_range(cam, first, last)
     return cam
