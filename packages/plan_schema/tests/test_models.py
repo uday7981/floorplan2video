@@ -13,11 +13,15 @@ from plan_schema import Plan, canonical_json, plan_hash
 # ---------- Happy path ----------
 
 def test_minimal_valid_plan_parses(valid_plan_dict):
+    """v1 input (flat walls/openings/rooms) auto-upgrades to v2 floors[0]."""
     plan = Plan.model_validate(valid_plan_dict)
-    assert plan.schema_version == "1.0"
     assert plan.units == "m"
-    assert len(plan.walls) == 4
-    assert sum(1 for o in plan.openings if o.main_entrance) == 1
+    assert len(plan.floors) == 1
+    assert plan.floors[0].id == "ground"
+    assert plan.floors[0].ord == 0
+    assert plan.floors[0].z0 == 0.0
+    assert len(plan.all_walls) == 4
+    assert sum(1 for o in plan.all_openings if o.main_entrance) == 1
 
 
 def test_json_round_trip(valid_plan_dict):

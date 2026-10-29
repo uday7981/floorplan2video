@@ -23,6 +23,76 @@
       "title": "Defaults",
       "type": "object"
     },
+    "Floor": {
+      "additionalProperties": false,
+      "description": "One storey of the building. Walls / openings / rooms are nested here so\nIDs stay scoped per floor and the Blender builder can iterate storeys\ndirectly.",
+      "properties": {
+        "id": {
+          "description": "Stable id, e.g. 'ground', 'first'.",
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "ord": {
+          "description": "0 = ground. Higher = higher up.",
+          "minimum": 0,
+          "title": "Ord",
+          "type": "integer"
+        },
+        "z0": {
+          "description": "Metres from world origin to this floor's slab top.",
+          "minimum": 0,
+          "title": "Z0",
+          "type": "number"
+        },
+        "wall_height": {
+          "description": "Floor-to-ceiling height on this floor.",
+          "exclusiveMinimum": 0,
+          "title": "Wall Height",
+          "type": "number"
+        },
+        "label": {
+          "description": "Human label, e.g. 'Ground Floor'.",
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "walls": {
+          "items": {
+            "$ref": "#/$defs/Wall"
+          },
+          "minItems": 1,
+          "title": "Walls",
+          "type": "array"
+        },
+        "openings": {
+          "items": {
+            "$ref": "#/$defs/Opening"
+          },
+          "title": "Openings",
+          "type": "array"
+        },
+        "rooms": {
+          "items": {
+            "$ref": "#/$defs/Room"
+          },
+          "minItems": 1,
+          "title": "Rooms",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "ord",
+        "z0",
+        "wall_height",
+        "label",
+        "walls",
+        "rooms"
+      ],
+      "title": "Floor",
+      "type": "object"
+    },
     "Meta": {
       "additionalProperties": false,
       "properties": {
@@ -196,6 +266,66 @@
       "title": "ScaleSource",
       "type": "string"
     },
+    "VerticalConnection": {
+      "additionalProperties": false,
+      "description": "A stair / void / elevator shaft that connects two floors.\n\n`polygon` is the connection footprint on the shared slab, in world (x, y)\nmetres. Blender uses it to cut a stairwell void in the upper floor's slab\nand position the stair geometry; the stair_climb camera traverses from\nthe centroid-at-z0_lower to the centroid-at-z0_upper over the shot duration.",
+      "properties": {
+        "id": {
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/VerticalConnectionKind"
+        },
+        "from_floor_id": {
+          "minLength": 1,
+          "title": "From Floor Id",
+          "type": "string"
+        },
+        "to_floor_id": {
+          "minLength": 1,
+          "title": "To Floor Id",
+          "type": "string"
+        },
+        "polygon": {
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array"
+          },
+          "minItems": 3,
+          "title": "Polygon",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "from_floor_id",
+        "to_floor_id",
+        "polygon"
+      ],
+      "title": "VerticalConnection",
+      "type": "object"
+    },
+    "VerticalConnectionKind": {
+      "enum": [
+        "stair",
+        "void",
+        "elevator"
+      ],
+      "title": "VerticalConnectionKind",
+      "type": "string"
+    },
     "Wall": {
       "additionalProperties": false,
       "properties": {
@@ -265,7 +395,7 @@
   "additionalProperties": false,
   "properties": {
     "schema_version": {
-      "default": "1.0",
+      "default": "2.0",
       "title": "Schema Version",
       "type": "string"
     },
@@ -281,35 +411,27 @@
     "defaults": {
       "$ref": "#/$defs/Defaults"
     },
-    "walls": {
+    "floors": {
       "items": {
-        "$ref": "#/$defs/Wall"
+        "$ref": "#/$defs/Floor"
       },
+      "maxItems": 6,
       "minItems": 1,
-      "title": "Walls",
+      "title": "Floors",
       "type": "array"
     },
-    "openings": {
+    "vertical_connections": {
       "items": {
-        "$ref": "#/$defs/Opening"
+        "$ref": "#/$defs/VerticalConnection"
       },
-      "title": "Openings",
-      "type": "array"
-    },
-    "rooms": {
-      "items": {
-        "$ref": "#/$defs/Room"
-      },
-      "minItems": 1,
-      "title": "Rooms",
+      "title": "Vertical Connections",
       "type": "array"
     }
   },
   "required": [
     "meta",
     "defaults",
-    "walls",
-    "rooms"
+    "floors"
   ],
   "title": "Plan",
   "type": "object"

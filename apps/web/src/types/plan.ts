@@ -9,6 +9,22 @@ export type Defaults = {
   floor_thickness: number;
 };
 
+export type Floor = {
+  /** Stable id, e.g. 'ground', 'first'. */
+  id: string;
+  /** 0 = ground. Higher = higher up. */
+  ord: number;
+  /** Metres from world origin to this floor's slab top. */
+  z0: number;
+  /** Floor-to-ceiling height on this floor. */
+  wall_height: number;
+  /** Human label, e.g. 'Ground Floor'. */
+  label: string;
+  walls: Array<Wall>;
+  openings?: Array<Opening>;
+  rooms: Array<Room>;
+};
+
 export type Meta = {
   scale_source: ScaleSource;
   confidence: number;
@@ -41,6 +57,16 @@ export type RoomType = "living" | "dining" | "kitchen" | "bedroom" | "bath" | "h
 
 export type ScaleSource = "dimension_text" | "scale_bar" | "user_input";
 
+export type VerticalConnection = {
+  id: string;
+  kind: VerticalConnectionKind;
+  from_floor_id: string;
+  to_floor_id: string;
+  polygon: Array<[number, number]>;
+};
+
+export type VerticalConnectionKind = "stair" | "void" | "elevator";
+
 export type Wall = {
   id: string;
   /** Centreline start point (x, y) in metres. */
@@ -57,7 +83,6 @@ export type Plan = {
   units?: string;
   meta: Meta;
   defaults: Defaults;
-  walls: Array<Wall>;
-  openings?: Array<Opening>;
-  rooms: Array<Room>;
+  floors: Array<Floor>;
+  vertical_connections?: Array<VerticalConnection>;
 };
