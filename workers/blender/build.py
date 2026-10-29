@@ -75,7 +75,8 @@ def main() -> int:
         scene.reset_scene()
         mats = materials.make_materials(preset)
         scene.build_walls_and_openings(plan, mats["wall"])
-        scene.build_floor(plan, mats["floor"])
+        slabs = scene.build_floor_slabs(plan, mats["floor"])
+        scene.build_vertical_connections(plan, slabs, mats["trim"])
         if project_type == "house":
             scene.build_roof(plan, mats["trim"])
         scene.build_lights(plan)
