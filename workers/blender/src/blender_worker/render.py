@@ -1,11 +1,20 @@
-"""Render orchestration. Three outputs per shot — see TRD §"Blender worker"."""
+"""Render orchestration (v2.0 — journey + segments).
+
+New API:
+    render_driving_range(path, first_frame, last_frame)  — mp4 slice
+    render_clay_frame_at(path, frame)                    — single Workbench clay PNG
+    render_cad_frame_at(path, frame)                     — single EEVEE+Freestyle PNG
+
+The scene + continuous camera are built up front by build.py; each render
+call just adjusts frame range + engine for the output.
+"""
 from __future__ import annotations
 
 from pathlib import Path
 
 
 DRIVING_RES = (1280, 720)
-CLAY_SINGLE_COLOR = (0.75, 0.72, 0.65)   # warm beige clay
+CLAY_SINGLE_COLOR = (0.75, 0.72, 0.65)
 
 
 def _apply_common(scn, res: tuple[int, int] = DRIVING_RES):
@@ -14,8 +23,8 @@ def _apply_common(scn, res: tuple[int, int] = DRIVING_RES):
     scn.render.resolution_percentage = 100
 
 
-def render_driving(out_path: Path) -> Path:
-    """driving.mp4 — Workbench solid shading, 1280x720, animated at scene fps."""
+def render_driving_range(out_path: Path, first_frame: int, last_frame: int) -> Path:
+    """mp4 of the camera's path from first_frame..last_frame, Workbench solid."""
     import bpy
     scn = bpy.context.scene
     _apply_common(scn)
@@ -31,24 +40,36 @@ def render_driving(out_path: Path) -> Path:
     scn.render.ffmpeg.ffmpeg_preset = "GOOD"
     scn.render.ffmpeg.audio_codec = "NONE"
 
-    # FFMPEG + animation: Blender names the file "<stem><start>-<end>.mp4"
-    # (e.g. driving0001-0120.mp4). Point it at the stem, then rename the
-    # produced file to the requested path.
+    scn.frame_start = int(first_frame)
+    scn.frame_end = int(last_frame)
     scn.render.filepath = str(out_path.with_suffix(""))
     bpy.ops.render.render(animation=True)
-    stem = out_path.stem
-    candidates = list(out_path.parent.glob(f"{stem}*.mp4"))
-    if candidates:
-        # If the exact file already exists keep it; else rename the first match.
-        if out_path in candidates:
-            return out_path
-        candidates[0].rename(out_path)
+    produced = list(out_path.parent.glob(f"{out_path.stem}*.mp4"))
+    if produced and produced[0] != out_path:
+        produced[0].rename(out_path)
     return out_path
 
 
-def render_start_frame(out_path: Path) -> Path:
-    """start.png — EEVEE Next + Freestyle; all meshes overridden to flat white
-    for a clean CAD line-drawing look. Only frame_start is rendered."""
+def render_clay_frame_at(out_path: Path, frame: int) -> Path:
+    """Single frame in Workbench clay shading."""
+    import bpy
+    scn = bpy.context.scene
+    _apply_common(scn)
+    scn.render.engine = "BLENDER_WORKBENCH"
+    scn.render.use_freestyle = False
+    scn.display.shading.light = "MATCAP"
+    scn.display.shading.color_type = "SINGLE"
+    scn.display.shading.single_color = CLAY_SINGLE_COLOR
+
+    scn.render.image_settings.file_format = "PNG"
+    scn.render.filepath = str(out_path)
+    scn.frame_set(int(frame))
+    bpy.ops.render.render(write_still=True)
+    return out_path
+
+
+def render_cad_frame_at(out_path: Path, frame: int) -> Path:
+    """Single frame in EEVEE Next + Freestyle (CAD-style). Used for boundary 0."""
     import bpy
     scn = bpy.context.scene
     _apply_common(scn)
@@ -71,7 +92,6 @@ def render_start_frame(out_path: Path) -> Path:
     scn.world.use_nodes = False
     scn.world.color = (1.0, 1.0, 1.0)
 
-    # Temporarily swap every mesh material for a flat white, then restore.
     white = bpy.data.materials.new("fp_cad_white")
     white.use_nodes = False
     white.diffuse_color = (1.0, 1.0, 1.0, 1.0)
@@ -81,11 +101,10 @@ def render_start_frame(out_path: Path) -> Path:
             saved[obj.name] = list(obj.data.materials)
             obj.data.materials.clear()
             obj.data.materials.append(white)
-
     try:
         scn.render.image_settings.file_format = "PNG"
         scn.render.filepath = str(out_path)
-        scn.frame_set(scn.frame_start)
+        scn.frame_set(int(frame))
         bpy.ops.render.render(write_still=True)
     finally:
         for name, mats in saved.items():
@@ -96,24 +115,4 @@ def render_start_frame(out_path: Path) -> Path:
             for m in mats:
                 obj.data.materials.append(m)
         bpy.data.materials.remove(white, do_unlink=True)
-
-    return out_path
-
-
-def render_clay_frame(out_path: Path) -> Path:
-    """clay.png — Workbench clay shading, scene's final frame. End-frame
-    reference image passed to OpenAI image edit in M3."""
-    import bpy
-    scn = bpy.context.scene
-    _apply_common(scn)
-    scn.render.engine = "BLENDER_WORKBENCH"
-    scn.render.use_freestyle = False
-    scn.display.shading.light = "MATCAP"
-    scn.display.shading.color_type = "SINGLE"
-    scn.display.shading.single_color = CLAY_SINGLE_COLOR
-
-    scn.render.image_settings.file_format = "PNG"
-    scn.render.filepath = str(out_path)
-    scn.frame_set(scn.frame_end)
-    bpy.ops.render.render(write_still=True)
     return out_path
