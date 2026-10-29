@@ -3,26 +3,25 @@
 
 
 export type Defaults = {
-  /** Default wall height in metres. */
-  wall_height: number;
   /** Floor slab thickness in metres. */
   floor_thickness: number;
 };
 
-export type Floor = {
+export type Level = {
   /** Stable id, e.g. 'ground', 'first'. */
   id: string;
-  /** 0 = ground. Higher = higher up. */
-  ord: number;
-  /** Metres from world origin to this floor's slab top. */
-  z0: number;
-  /** Floor-to-ceiling height on this floor. */
-  wall_height: number;
   /** Human label, e.g. 'Ground Floor'. */
-  label: string;
+  name: string;
+  /** 0 = ground. Higher = higher up. */
+  index: number;
+  /** Metres from world origin to this level's slab top. */
+  elevation: number;
+  /** Height from this level's slab top to the next level's slab top (metres). */
+  floor_to_floor_height?: number;
   walls: Array<Wall>;
   openings?: Array<Opening>;
   rooms: Array<Room>;
+  voids?: Array<Void>;
 };
 
 export type Meta = {
@@ -35,11 +34,9 @@ export type Opening = {
   id: string;
   wall_id: string;
   type: OpeningType;
-  /** Metres from wall start (a) to opening centre. */
   offset: number;
   width: number;
   height: number;
-  /** Height from floor to bottom of opening. */
   sill: number;
   main_entrance?: boolean;
 };
@@ -57,15 +54,22 @@ export type RoomType = "living" | "dining" | "kitchen" | "bedroom" | "bath" | "h
 
 export type ScaleSource = "dimension_text" | "scale_bar" | "user_input";
 
-export type VerticalConnection = {
+export type Stair = {
   id: string;
-  kind: VerticalConnectionKind;
-  from_floor_id: string;
-  to_floor_id: string;
-  polygon: Array<[number, number]>;
+  from_level: string;
+  to_level: string;
+  footprint: Array<[number, number]>;
+  start_point: [number, number];
+  end_point: [number, number];
+  direction?: StairDirection;
 };
 
-export type VerticalConnectionKind = "stair" | "void" | "elevator";
+export type StairDirection = "up" | "down";
+
+export type Void = {
+  id: string;
+  polygon: Array<[number, number]>;
+};
 
 export type Wall = {
   id: string;
@@ -83,6 +87,6 @@ export type Plan = {
   units?: string;
   meta: Meta;
   defaults: Defaults;
-  floors: Array<Floor>;
-  vertical_connections?: Array<VerticalConnection>;
+  levels: Array<Level>;
+  stairs?: Array<Stair>;
 };

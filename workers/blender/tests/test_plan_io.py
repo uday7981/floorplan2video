@@ -26,27 +26,25 @@ def _write(tmp: Path, name: str, obj: dict) -> Path:
 
 
 def test_load_plan_happy_v1_autoupgrades(tmp_path, minimal_plan):
-    """v1 input (flat walls/openings/rooms) auto-wraps into floors[0] so
-    everything downstream only sees the v2 shape."""
+    """v1 input auto-wraps into levels[0] (v2.0 shape)."""
     p = _write(tmp_path, "plan.json", minimal_plan)
     data = load_plan(p)
-    assert "floors" in data
-    assert len(data["floors"]) == 1
-    assert data["floors"][0]["id"] == "ground"
-    assert data["floors"][0]["z0"] == 0.0
-    assert len(data["floors"][0]["walls"]) == 4
-    # Aggregators pull from every floor
+    assert "levels" in data
+    assert len(data["levels"]) == 1
+    assert data["levels"][0]["id"] == "ground"
+    assert data["levels"][0]["elevation"] == 0.0
+    assert data["levels"][0]["index"] == 0
+    assert len(data["levels"][0]["walls"]) == 4
     assert len(all_walls(data)) == 4
     assert len(all_rooms(data)) == 1
     assert len(all_openings(data)) == 1
-    # vertical_connections defaulted to []
-    assert data["vertical_connections"] == []
+    assert data["stairs"] == []
 
 
 def test_load_plan_missing_section(tmp_path, minimal_plan):
     minimal_plan.pop("walls")
     p = _write(tmp_path, "plan.json", minimal_plan)
-    with pytest.raises(ValueError, match="walls"):
+    with pytest.raises(ValueError, match="(walls|levels|floors)"):
         load_plan(p)
 
 
@@ -54,20 +52,21 @@ def test_load_plan_v2_passthrough(tmp_path):
     plan_v2 = {
         "schema_version": "2.0",
         "units": "m",
-        "defaults": {"wall_height": 2.8, "floor_thickness": 0.2},
-        "floors": [{
-            "id": "ground", "ord": 0, "z0": 0.0, "wall_height": 2.8, "label": "Ground",
+        "defaults": {"floor_thickness": 0.2},
+        "levels": [{
+            "id": "ground", "name": "Ground",
+            "index": 0, "elevation": 0.0, "floor_to_floor_height": 3.0,
             "walls": [{"id": "w1", "a": [0, 0], "b": [6, 0], "thickness": 0.23, "height": 2.8}],
             "openings": [],
             "rooms": [{"id": "r1", "name": "Hall", "type": "hall",
                        "polygon": [[0, 0], [6, 0], [6, 5], [0, 5]]}],
         }],
-        "vertical_connections": [],
+        "stairs": [],
     }
     p = _write(tmp_path, "plan.json", plan_v2)
     data = load_plan(p)
-    assert len(data["floors"]) == 1
-    assert floor_by_id(data, "ground")["label"] == "Ground"
+    assert len(data["levels"]) == 1
+    assert floor_by_id(data, "ground")["name"] == "Ground"
     assert floor_of_room(data, "r1")["id"] == "ground"
 
 

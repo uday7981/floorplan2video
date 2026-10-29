@@ -1,33 +1,20 @@
 """Load + lightly validate plan.json and shots.json.
 
-Plan JSON shape = packages/plan_schema.Plan (we only need to READ it here,
-so we parse as plain dicts and keep this module bpy-free + plan_schema-free).
+Plan JSON shape = packages/plan_schema.Plan v2.0 (levels + stairs + voids).
+This loader accepts THREE input shapes and normalises them all to v2.0 so
+downstream code only ever iterates `plan["levels"]`:
 
-Shots JSON shape (v1):
+  1. v2.0 proper (levels[] + stairs[])            — passthrough
+  2. v2-M8 (floors[] + vertical_connections[])    — renamed on the fly
+  3. v1 (flat walls/openings/rooms at root)       — wrapped into levels[0]
+
+Shots JSON shape (v1 — the per-shot API; replaced by `journey.json` in v2 but
+retained here while the journey builder lands):
     {
       "schema_version": "1.0",
       "project_type": "house" | "interior",
-      "style_preset": {
-        "materials": "<comma string>",   # e.g. "oak, black aluminium, natural white"
-        "light": "<colour temp>",         # e.g. "3000K"
-        "setting": "<background>",        # e.g. "a beautiful forest"
-      },
-      "source_plan_image_path": "...png",  # optional; used by the opening-shot desk
-      "shots": [
-        {
-          "id": "s1",
-          "ord": 0,
-          "kind": "opening" | "room" | "exterior",
-          "label": "01 Sitting Room",
-          "room_id": "R1",                 # required if kind == "room"
-          "camera": {
-            "move": "dolly" | "pan" | "crane" | "orbit",
-            "duration_s": 5,
-            "lens_mm": 18,
-            "fps": 24
-          }
-        }
-      ]
+      "style_preset": {...},
+      "shots": [{"id","ord","kind","label","room_id?","camera":{...}}]
     }
 """
 from __future__ import annotations
@@ -42,70 +29,78 @@ CAMERA_MOVES = {"dolly", "pan", "crane", "orbit", "stair"}
 
 
 def load_plan(path: Path) -> dict[str, Any]:
-    """Load plan.json. Accepts both v2 (floors[]) and v1 (flat walls/openings/
-    rooms); v1 is auto-wrapped into a single ground floor so downstream code
-    only ever sees the floors[] shape."""
+    """Load + normalise to v2.0. Downstream only ever sees `levels` + `stairs`."""
     data = json.loads(Path(path).read_text())
     if "defaults" not in data:
         raise ValueError("plan.json missing 'defaults'")
-    if "floors" in data:
-        if not isinstance(data["floors"], list) or not data["floors"]:
-            raise ValueError("plan.json 'floors' must be a non-empty list")
-        for f in data["floors"]:
-            for req in ("id", "ord", "z0", "wall_height", "walls", "rooms"):
-                if req not in f:
-                    raise ValueError(f"floor {f.get('id','?')} missing '{req}'")
-    else:
-        # v1 shape — wrap into a single ground floor so build.py always sees
-        # the v2 structure.
-        if "walls" not in data or "rooms" not in data:
-            raise ValueError("plan.json missing 'walls'/'rooms' (and no 'floors')")
-        data["floors"] = [{
-            "id": "ground",
-            "ord": 0,
-            "z0": 0.0,
-            "wall_height": data["defaults"].get("wall_height", 2.8),
-            "label": "Ground Floor",
-            "walls": data.pop("walls"),
-            "openings": data.pop("openings", []),
-            "rooms": data.pop("rooms"),
-        }]
-    data.setdefault("vertical_connections", [])
+    data = _normalise_to_v2(data)
+    data.setdefault("stairs", [])
+    for l in data["levels"]:
+        for req in ("id", "name", "index", "elevation", "walls", "rooms"):
+            if req not in l:
+                raise ValueError(f"level {l.get('id','?')} missing '{req}'")
+        l.setdefault("floor_to_floor_height", 3.0)
+        l.setdefault("voids", [])
+        l.setdefault("openings", [])
     return data
 
 
-# ---------- helpers so build.py / scene.py / cameras.py stay floor-agnostic ----------
+def _normalise_to_v2(data: dict) -> dict:
+    """Promote v1 / v2-M8 inputs into the v2.0 shape in-place-friendly fashion."""
+    if "levels" in data:
+        return data
 
-def floors_of(plan: dict) -> list[dict]:
-    """Return the floors list (always present after load_plan)."""
-    return plan["floors"]
+    # Shape 2: floors[] + vertical_connections[]
+    if "floors" in data:
+        data = dict(data)
+        legacy_floors = data.pop("floors")
+        thickness = data.get("defaults", {}).get("floor_thickness", 0.2)
+        data["levels"] = [{
+            "id": f.get("id"),
+            "name": f.get("label") or f.get("name") or f.get("id", "Level"),
+            "index": f.get("ord", 0),
+            "elevation": f.get("z0", 0.0),
+            "floor_to_floor_height":
+                f.get("floor_to_floor_height")
+                or (f.get("wall_height", 2.8) + thickness),
+            "walls": f.get("walls", []),
+            "openings": f.get("openings", []),
+            "rooms": f.get("rooms", []),
+            "voids": f.get("voids", []),
+        } for f in legacy_floors]
+        if "vertical_connections" in data and "stairs" not in data:
+            old = data.pop("vertical_connections")
+            data["stairs"] = [{
+                "id": vc.get("id"),
+                "from_level": vc.get("from_floor_id"),
+                "to_level": vc.get("to_floor_id"),
+                "footprint": vc.get("polygon", []),
+                "start_point": [0, 0],  # downstream code should ignore unless needed
+                "end_point": [0, 0],
+                "direction": "up",
+            } for vc in old]
+        return data
 
+    # Shape 3: v1 flat walls/openings/rooms
+    if "walls" in data:
+        data = dict(data)
+        defaults = dict(data.get("defaults", {}) or {})
+        thickness = defaults.get("floor_thickness", 0.2)
+        wall_height = defaults.pop("wall_height", 2.8)
+        data["defaults"] = defaults if defaults else {"floor_thickness": thickness}
+        data["defaults"].setdefault("floor_thickness", thickness)
+        data["levels"] = [{
+            "id": "ground", "name": "Ground Floor",
+            "index": 0, "elevation": 0.0,
+            "floor_to_floor_height": wall_height + thickness,
+            "walls": data.pop("walls"),
+            "openings": data.pop("openings", []),
+            "rooms": data.pop("rooms"),
+            "voids": data.pop("voids", []),
+        }]
+        return data
 
-def floor_by_id(plan: dict, floor_id: str) -> dict:
-    for f in plan["floors"]:
-        if f["id"] == floor_id:
-            return f
-    raise KeyError(f"floor {floor_id} not in plan")
-
-
-def floor_of_room(plan: dict, room_id: str) -> dict:
-    for f in plan["floors"]:
-        for r in f["rooms"]:
-            if r["id"] == room_id:
-                return f
-    raise KeyError(f"room {room_id} not found in any floor")
-
-
-def all_walls(plan: dict) -> list[dict]:
-    return [w for f in plan["floors"] for w in f["walls"]]
-
-
-def all_openings(plan: dict) -> list[dict]:
-    return [op for f in plan["floors"] for op in f.get("openings", [])]
-
-
-def all_rooms(plan: dict) -> list[dict]:
-    return [r for f in plan["floors"] for r in f["rooms"]]
+    raise ValueError("plan.json has none of 'levels', 'floors', or 'walls' at root")
 
 
 def load_shots(path: Path) -> dict[str, Any]:
@@ -135,17 +130,54 @@ def _validate_shot(s: dict[str, Any]) -> None:
     if cam["move"] not in CAMERA_MOVES:
         raise ValueError(f"shot {s['id']}.camera.move invalid: {cam['move']!r}")
     if cam["duration_s"] not in (5, 8):
-        # TRD: 5 s default, 8 s for large spaces — we don't *forbid* others
-        # but warn by raising; relax here if a project needs it.
         raise ValueError(f"shot {s['id']}.camera.duration_s must be 5 or 8")
     if s["kind"] == "stair_climb" and "stair_connection_id" not in s:
         raise ValueError(f"shot {s['id']}: stair_climb needs 'stair_connection_id'")
 
 
 def default_style_preset() -> dict[str, str]:
-    """TRD default style preset (used when shots.json omits one)."""
     return {
         "materials": "oak, black aluminium, natural white",
         "light": "3000K",
         "setting": "a beautiful forest",
     }
+
+
+# ---------- v2.0 convenience helpers ----------
+
+def levels_of(plan: dict) -> list[dict]:
+    return plan["levels"]
+
+
+def level_by_id(plan: dict, level_id: str) -> dict:
+    for l in plan["levels"]:
+        if l["id"] == level_id:
+            return l
+    raise KeyError(f"level {level_id} not in plan")
+
+
+def level_of_room(plan: dict, room_id: str) -> dict:
+    for l in plan["levels"]:
+        for r in l["rooms"]:
+            if r["id"] == room_id:
+                return l
+    raise KeyError(f"room {room_id} not found in any level")
+
+
+def all_walls(plan: dict) -> list[dict]:
+    return [w for l in plan["levels"] for w in l["walls"]]
+
+
+def all_openings(plan: dict) -> list[dict]:
+    return [op for l in plan["levels"] for op in l.get("openings", [])]
+
+
+def all_rooms(plan: dict) -> list[dict]:
+    return [r for l in plan["levels"] for r in l["rooms"]]
+
+
+# ---------- legacy aliases (keep imports working during the migration) ----------
+
+floors_of = levels_of
+floor_by_id = level_by_id
+floor_of_room = level_of_room

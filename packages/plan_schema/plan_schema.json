@@ -3,12 +3,6 @@
     "Defaults": {
       "additionalProperties": false,
       "properties": {
-        "wall_height": {
-          "description": "Default wall height in metres.",
-          "exclusiveMinimum": 0,
-          "title": "Wall Height",
-          "type": "number"
-        },
         "floor_thickness": {
           "description": "Floor slab thickness in metres.",
           "exclusiveMinimum": 0,
@@ -17,15 +11,14 @@
         }
       },
       "required": [
-        "wall_height",
         "floor_thickness"
       ],
       "title": "Defaults",
       "type": "object"
     },
-    "Floor": {
+    "Level": {
       "additionalProperties": false,
-      "description": "One storey of the building. Walls / openings / rooms are nested here so\nIDs stay scoped per floor and the Blender builder can iterate storeys\ndirectly.",
+      "description": "One storey of the building. Walls/openings/rooms/voids are nested so\nIDs stay scoped per level and the Blender builder iterates storeys\ndirectly.",
       "properties": {
         "id": {
           "description": "Stable id, e.g. 'ground', 'first'.",
@@ -33,29 +26,30 @@
           "title": "Id",
           "type": "string"
         },
-        "ord": {
-          "description": "0 = ground. Higher = higher up.",
-          "minimum": 0,
-          "title": "Ord",
-          "type": "integer"
-        },
-        "z0": {
-          "description": "Metres from world origin to this floor's slab top.",
-          "minimum": 0,
-          "title": "Z0",
-          "type": "number"
-        },
-        "wall_height": {
-          "description": "Floor-to-ceiling height on this floor.",
-          "exclusiveMinimum": 0,
-          "title": "Wall Height",
-          "type": "number"
-        },
-        "label": {
+        "name": {
           "description": "Human label, e.g. 'Ground Floor'.",
           "minLength": 1,
-          "title": "Label",
+          "title": "Name",
           "type": "string"
+        },
+        "index": {
+          "description": "0 = ground. Higher = higher up.",
+          "minimum": 0,
+          "title": "Index",
+          "type": "integer"
+        },
+        "elevation": {
+          "description": "Metres from world origin to this level's slab top.",
+          "minimum": 0,
+          "title": "Elevation",
+          "type": "number"
+        },
+        "floor_to_floor_height": {
+          "default": 3.0,
+          "description": "Height from this level's slab top to the next level's slab top (metres).",
+          "exclusiveMinimum": 0,
+          "title": "Floor To Floor Height",
+          "type": "number"
         },
         "walls": {
           "items": {
@@ -79,18 +73,24 @@
           "minItems": 1,
           "title": "Rooms",
           "type": "array"
+        },
+        "voids": {
+          "items": {
+            "$ref": "#/$defs/Void"
+          },
+          "title": "Voids",
+          "type": "array"
         }
       },
       "required": [
         "id",
-        "ord",
-        "z0",
-        "wall_height",
-        "label",
+        "name",
+        "index",
+        "elevation",
         "walls",
         "rooms"
       ],
-      "title": "Floor",
+      "title": "Level",
       "type": "object"
     },
     "Meta": {
@@ -137,7 +137,6 @@
           "$ref": "#/$defs/OpeningType"
         },
         "offset": {
-          "description": "Metres from wall start (a) to opening centre.",
           "minimum": 0,
           "title": "Offset",
           "type": "number"
@@ -153,7 +152,6 @@
           "type": "number"
         },
         "sill": {
-          "description": "Height from floor to bottom of opening.",
           "minimum": 0,
           "title": "Sill",
           "type": "number"
@@ -266,26 +264,103 @@
       "title": "ScaleSource",
       "type": "string"
     },
-    "VerticalConnection": {
+    "Stair": {
       "additionalProperties": false,
-      "description": "A stair / void / elevator shaft that connects two floors.\n\n`polygon` is the connection footprint on the shared slab, in world (x, y)\nmetres. Blender uses it to cut a stairwell void in the upper floor's slab\nand position the stair geometry; the stair_climb camera traverses from\nthe centroid-at-z0_lower to the centroid-at-z0_upper over the shot duration.",
+      "description": "A vertical connection between two levels.\n\nfootprint   \u2014 polygon on plan view (xy) that the stair occupies.\nstart_point \u2014 xy where the user begins the climb at from_level elevation.\nend_point   \u2014 xy where the user emerges at to_level elevation.\ndirection   \u2014 'up' or 'down' when traveling from_level \u2192 to_level.\n              Normally 'up'; 'down' is allowed for descending stairs\n              (e.g. a basement).",
       "properties": {
         "id": {
           "minLength": 1,
           "title": "Id",
           "type": "string"
         },
-        "kind": {
-          "$ref": "#/$defs/VerticalConnectionKind"
-        },
-        "from_floor_id": {
+        "from_level": {
           "minLength": 1,
-          "title": "From Floor Id",
+          "title": "From Level",
           "type": "string"
         },
-        "to_floor_id": {
+        "to_level": {
           "minLength": 1,
-          "title": "To Floor Id",
+          "title": "To Level",
+          "type": "string"
+        },
+        "footprint": {
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array"
+          },
+          "minItems": 3,
+          "title": "Footprint",
+          "type": "array"
+        },
+        "start_point": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Start Point",
+          "type": "array"
+        },
+        "end_point": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "End Point",
+          "type": "array"
+        },
+        "direction": {
+          "$ref": "#/$defs/StairDirection",
+          "default": "up"
+        }
+      },
+      "required": [
+        "id",
+        "from_level",
+        "to_level",
+        "footprint",
+        "start_point",
+        "end_point"
+      ],
+      "title": "Stair",
+      "type": "object"
+    },
+    "StairDirection": {
+      "description": "Travel direction when going from_level \u2192 to_level. Normally 'up'.",
+      "enum": [
+        "up",
+        "down"
+      ],
+      "title": "StairDirection",
+      "type": "string"
+    },
+    "Void": {
+      "additionalProperties": false,
+      "description": "A polygon on this level's slab that is cut away \u2014 stair wells + any\ndouble-height spaces. Blender boolean-DIFFs the polygon from the slab\nABOVE this level so the camera can see through.",
+      "properties": {
+        "id": {
+          "minLength": 1,
+          "title": "Id",
           "type": "string"
         },
         "polygon": {
@@ -309,22 +384,10 @@
       },
       "required": [
         "id",
-        "kind",
-        "from_floor_id",
-        "to_floor_id",
         "polygon"
       ],
-      "title": "VerticalConnection",
+      "title": "Void",
       "type": "object"
-    },
-    "VerticalConnectionKind": {
-      "enum": [
-        "stair",
-        "void",
-        "elevator"
-      ],
-      "title": "VerticalConnectionKind",
-      "type": "string"
     },
     "Wall": {
       "additionalProperties": false,
@@ -411,27 +474,27 @@
     "defaults": {
       "$ref": "#/$defs/Defaults"
     },
-    "floors": {
+    "levels": {
       "items": {
-        "$ref": "#/$defs/Floor"
+        "$ref": "#/$defs/Level"
       },
       "maxItems": 6,
       "minItems": 1,
-      "title": "Floors",
+      "title": "Levels",
       "type": "array"
     },
-    "vertical_connections": {
+    "stairs": {
       "items": {
-        "$ref": "#/$defs/VerticalConnection"
+        "$ref": "#/$defs/Stair"
       },
-      "title": "Vertical Connections",
+      "title": "Stairs",
       "type": "array"
     }
   },
   "required": [
     "meta",
     "defaults",
-    "floors"
+    "levels"
   ],
   "title": "Plan",
   "type": "object"

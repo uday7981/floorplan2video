@@ -86,8 +86,8 @@ def _apply_boolean_cut(target_obj, cutter):
 def build_walls_and_openings(plan: dict, wall_mat):
     """Iterate every floor; place walls at that floor's z0, cut openings."""
     all_wall_objs = []
-    for floor in plan["floors"]:
-        z0 = float(floor["z0"])
+    for floor in plan["levels"]:
+        z0 = float(floor["elevation"])
         walls_src_by_id = {w["id"]: w for w in floor["walls"]}
         walls_by_id = {w["id"]: _add_wall(w, z0, wall_mat) for w in floor["walls"]}
         for op in floor.get("openings", []):
@@ -105,7 +105,7 @@ def build_walls_and_openings(plan: dict, wall_mat):
 def _plan_bbox(plan: dict) -> tuple[float, float, float, float]:
     xs: list[float] = []
     ys: list[float] = []
-    for f in plan["floors"]:
+    for f in plan["levels"]:
         for w in f["walls"]:
             xs.extend((w["a"][0], w["b"][0]))
             ys.extend((w["a"][1], w["b"][1]))
@@ -120,8 +120,8 @@ def build_floor_slabs(plan: dict, floor_mat) -> dict:
     w, d = xmax - xmin + 0.5, ymax - ymin + 0.5
     t = plan["defaults"]["floor_thickness"]
     slabs: dict = {}
-    for floor in plan["floors"]:
-        z = float(floor["z0"]) - t / 2
+    for floor in plan["levels"]:
+        z = float(floor["elevation"]) - t / 2
         bpy.ops.mesh.primitive_cube_add(location=(cx, cy, z))
         obj = bpy.context.active_object
         obj.name = f"Floor_{floor['id']}"
@@ -134,11 +134,11 @@ def build_floor_slabs(plan: dict, floor_mat) -> dict:
 def build_roof(plan: dict, roof_mat):
     """Flat slab above the top-most floor's ceiling."""
     import bpy
-    top = max(plan["floors"], key=lambda f: int(f["ord"]))
+    top = max(plan["levels"], key=lambda f: int(f["index"]))
     xmin, ymin, xmax, ymax = _plan_bbox(plan)
     cx, cy = (xmin + xmax) / 2, (ymin + ymax) / 2
     w, d = xmax - xmin + 0.6, ymax - ymin + 0.6
-    z = float(top["z0"]) + float(top["wall_height"]) + 0.1
+    z = float(top["elevation"]) + float(top["floor_to_floor_height"]) - float(plan["defaults"]["floor_thickness"]) + 0.1
     bpy.ops.mesh.primitive_cube_add(location=(cx, cy, z))
     obj = bpy.context.active_object
     obj.name = "Roof"
@@ -205,22 +205,36 @@ def _add_stair_treads(polygon, z_lo, z_hi, mat):
             obj.data.materials.append(mat)
 
 
-def build_vertical_connections(plan: dict, slabs: dict, stair_mat):
-    """For each vertical_connection: cut void in upper slab + add stair treads."""
-    floors_by_id = {f["id"]: f for f in plan["floors"]}
+def build_stairs_and_voids(plan: dict, slabs: dict, stair_mat):
+    """For each stair: cut void in upper slab + add stair treads.
+    For each level's `voids`: boolean-cut the polygon out of the slab ABOVE it
+    (so a double-height living room's ceiling is open to the floor above).
+    """
+    levels_by_id = {l["id"]: l for l in plan["levels"]}
+    levels_sorted = sorted(plan["levels"], key=lambda l: int(l["index"]))
     floor_thickness = plan["defaults"]["floor_thickness"]
-    for vc in plan.get("vertical_connections", []):
-        lo = floors_by_id[vc["from_floor_id"]]
-        hi = floors_by_id[vc["to_floor_id"]]
-        if int(lo["ord"]) > int(hi["ord"]):
+
+    # Stairs
+    for s_rec in plan.get("stairs", []):
+        lo = levels_by_id[s_rec["from_level"]]
+        hi = levels_by_id[s_rec["to_level"]]
+        if int(lo["index"]) > int(hi["index"]):
             lo, hi = hi, lo
-        z_lo = float(lo["z0"])
-        z_hi = float(hi["z0"])
+        z_lo = float(lo["elevation"])
+        z_hi = float(hi["elevation"])
         upper_slab = slabs.get(hi["id"])
         if upper_slab is not None:
-            _cut_stairwell_in_slab(upper_slab, vc["polygon"], floor_thickness)
-        if vc["kind"] == "stair":
-            _add_stair_treads(vc["polygon"], z_lo, z_hi, stair_mat)
+            _cut_stairwell_in_slab(upper_slab, s_rec["footprint"], floor_thickness)
+        _add_stair_treads(s_rec["footprint"], z_lo, z_hi, stair_mat)
+
+    # Per-level voids: cut from the slab of the LEVEL ABOVE this one.
+    for i, lvl in enumerate(levels_sorted[:-1]):
+        upper = levels_sorted[i + 1]
+        upper_slab = slabs.get(upper["id"])
+        if upper_slab is None:
+            continue
+        for v in lvl.get("voids", []):
+            _cut_stairwell_in_slab(upper_slab, v["polygon"], floor_thickness)
 
 
 # ---------- lights ----------
@@ -234,8 +248,8 @@ def build_lights(plan: dict):
     sun.data.energy = 3.0
     sun.rotation_euler = (math.radians(55), 0.0, math.radians(135))
 
-    for floor in plan["floors"]:
-        ceiling_z = float(floor["z0"]) + float(floor["wall_height"]) - 0.1
+    for floor in plan["levels"]:
+        ceiling_z = float(floor["elevation"]) + float(floor["floor_to_floor_height"] - plan["defaults"]["floor_thickness"]) - 0.1
         for room in floor["rooms"]:
             cx, cy = polygon_centroid(room["polygon"])
             bpy.ops.object.light_add(type="AREA", location=(cx, cy, ceiling_z))
@@ -252,5 +266,5 @@ def build_floor(plan: dict, floor_mat):
     """Legacy single-slab API — now returns the ground floor's slab. Prefer
     build_floor_slabs() in new code so you can hand slabs to the stair cutter."""
     slabs = build_floor_slabs(plan, floor_mat)
-    ground = min(plan["floors"], key=lambda f: int(f["ord"]))
+    ground = min(plan["levels"], key=lambda f: int(f["index"]))
     return slabs[ground["id"]]

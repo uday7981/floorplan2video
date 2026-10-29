@@ -8,7 +8,7 @@ The simplest multi-storey workflow:
   python -m extract --input first.png  --output first.json  --floor-id first  --floor-label "First Floor"
 
   # 3) Merge, declaring the stair that connects them
-  python scripts/merge_floors.py \\
+  python scripts/merge_levels.py \\
       --floor ground=ground.json \\
       --floor first=first.json \\
       --wall-height 2.8 --floor-thickness 0.2 \\
@@ -91,7 +91,7 @@ def build_plan(
         hint = frag.pop("_floor", None) or {}
         label = hint.get("label") or f"Floor {ord_}"
         if hint.get("id") and hint["id"] != fid:
-            print(f"[merge_floors] warning: --floor id {fid!r} doesn't match "
+            print(f"[merge_levels] warning: --floor id {fid!r} doesn't match "
                   f"the fragment's _floor.id {hint['id']!r}; using {fid!r}",
                   file=sys.stderr)
         floor_entries.append({
@@ -137,7 +137,7 @@ def build_plan(
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(prog="merge_floors",
+    ap = argparse.ArgumentParser(prog="merge_levels",
                                  formatter_class=argparse.RawTextHelpFormatter,
                                  description=__doc__)
     ap.add_argument("--floor", action="append", required=True,
@@ -155,7 +155,7 @@ def main() -> int:
     floors: list[tuple[str, Path]] = []
     for spec in args.floor:
         if "=" not in spec:
-            print(f"[merge_floors] bad --floor {spec!r}; expected FID=PATH", file=sys.stderr)
+            print(f"[merge_levels] bad --floor {spec!r}; expected FID=PATH", file=sys.stderr)
             return 2
         fid, pstr = spec.split("=", 1)
         floors.append((fid.strip(), Path(pstr.strip())))
@@ -169,7 +169,7 @@ def main() -> int:
         from plan_schema import Plan
         Plan.model_validate(plan)
     except Exception as e:
-        print(f"[merge_floors] validation failed: {e}", file=sys.stderr)
+        print(f"[merge_levels] validation failed: {e}", file=sys.stderr)
         return 1
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
