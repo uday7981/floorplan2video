@@ -48,6 +48,7 @@ export const MOCK_PROJECT: Project = {
   id: "oakhill",
   name: "Oakhill Residence",
   project_type: "house",
+  storey_mode: "single",
   style_preset: { materials: "oak, black aluminium, natural white", light: "3000K", setting: "a beautiful forest" },
   budget_usd: 40,
   spent_usd: 1.84,

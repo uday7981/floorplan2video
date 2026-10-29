@@ -3,13 +3,13 @@ import type { Project } from "@/lib/types";
 import { cn } from "@/lib/cn";
 
 const STATUS_LABEL: Record<Project["status"], string> = {
-  draft:        "Draft",
-  plan_review:  "Plan review",
-  shots:        "Shot list",
-  rendering:    "Rendering",
-  frames:       "End frames",
-  video:        "Generating video",
-  exported:     "Exported",
+  draft:            "Draft",
+  plan_review:      "Plan review",
+  journey:          "Journey",
+  boundary_frames:  "Boundary frames",
+  rendering:        "Rendering",
+  video:            "Generating video",
+  exported:         "Exported",
 };
 
 /**

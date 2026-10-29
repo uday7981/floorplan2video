@@ -5,13 +5,14 @@
  */
 
 export type ProjectType = "house" | "interior";
+export type StoreyMode = "single" | "multi";
 
 export type ProjectStatus =
   | "draft"
   | "plan_review"
-  | "shots"
+  | "journey"
+  | "boundary_frames"
   | "rendering"
-  | "frames"
   | "video"
   | "exported";
 
@@ -19,6 +20,7 @@ export interface Project {
   id: string;
   name: string;
   project_type: ProjectType;
+  storey_mode: StoreyMode;
   style_preset: Record<string, string>;
   budget_usd: number;
   spent_usd: number;

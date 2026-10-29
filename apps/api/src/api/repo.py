@@ -10,11 +10,13 @@ from fpv_common.db import Db, dumps_jsonb
 # ---------- projects ----------
 
 def project_create(db: Db, owner_id: UUID, name: str, style_preset: dict,
-                   project_type: str, budget_usd: float) -> dict:
+                   project_type: str, budget_usd: float,
+                   storey_mode: str = "single") -> dict:
     row = db.fetchrow(
-        "insert into projects (owner_id, name, style_preset, project_type, budget_usd) "
-        "values (%s, %s, %s::jsonb, %s, %s) returning *",
-        (str(owner_id), name, dumps_jsonb(style_preset), project_type, budget_usd),
+        "insert into projects (owner_id, name, style_preset, project_type, "
+        "storey_mode, budget_usd) values (%s, %s, %s::jsonb, %s, %s, %s) returning *",
+        (str(owner_id), name, dumps_jsonb(style_preset), project_type,
+         storey_mode, budget_usd),
     )
     assert row is not None
     return row

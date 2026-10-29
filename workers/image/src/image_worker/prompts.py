@@ -1,13 +1,13 @@
-"""Load end-frame prompt templates from prompts/templates.yaml and fill them
-with the shot's style preset + room type.
+"""Load boundary-frame prompt templates from prompts/templates.yaml.
 
-The templates themselves live in prompts/templates.yaml so prompt tweaks
-don't require a code change (hard rule).
+Three variants per TRD v2.0: room / exterior / stair-landing. Each takes
+{materials}, {light}, {setting} from the project's style preset, plus
+{room_type} for the room variant (free-text; prefer room.name over
+room.type for specificity).
 """
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 try:
     import yaml  # type: ignore
@@ -24,25 +24,48 @@ def _templates_path() -> Path:
     raise FileNotFoundError("prompts/templates.yaml not found walking up from " + str(here))
 
 
-def load_end_frame_templates() -> dict[str, str]:
+def load_boundary_frame_templates() -> dict[str, str]:
     data = yaml.safe_load(_templates_path().read_text())
+    # Keep the old `end_frames` section name for template reuse — same three
+    # variants, now serving boundary frames.
     return data["end_frames"]
 
 
-def fill_end_frame_prompt(shot_kind: str, preset: dict[str, str],
-                          room_type: str | None = None) -> str:
-    """shot_kind in {opening, room, exterior}. For 'room', room_type is required."""
-    templates = load_end_frame_templates()
-    if shot_kind not in templates:
-        raise ValueError(f"no end-frame template for shot kind {shot_kind!r}")
-    tmpl = templates[shot_kind]
+# Back-compat alias so legacy imports keep working during the v2 migration.
+load_end_frame_templates = load_boundary_frame_templates
+
+
+def fill_boundary_frame_prompt(role: str, preset: dict[str, str],
+                               room_type: str | None = None) -> str:
+    """role is the segment role from journey.json.
+      walkthrough / stair → room template
+      exterior            → exterior template
+      opening / descent   → opening template (handled by the one CAD→photoreal
+                            transition in the video worker; here we still
+                            generate a boundary frame to feed Seedance)
+    """
+    templates = load_boundary_frame_templates()
+    # Accept both new segment roles and legacy shot kinds (room/exterior/opening).
+    if role in ("walkthrough", "stair", "ending", "room"):
+        tmpl_key = "room"
+    elif role == "exterior":
+        tmpl_key = "exterior"
+    elif role in ("opening", "descent"):
+        tmpl_key = "opening"
+    else:
+        raise ValueError(f"no end-frame template for shot kind {role!r}")
+    tmpl = templates[tmpl_key]
     fields = {
         "materials": preset.get("materials", ""),
         "light": preset.get("light", ""),
         "setting": preset.get("setting", ""),
     }
-    if shot_kind == "room":
+    if tmpl_key == "room":
         if not room_type:
             raise ValueError("room shots need room_type (living, kitchen, ...)")
         fields["room_type"] = room_type
     return tmpl.format(**fields)
+
+
+# Back-compat alias
+fill_end_frame_prompt = fill_boundary_frame_prompt

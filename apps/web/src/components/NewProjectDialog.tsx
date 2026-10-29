@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from "./ui/Dialog";
 import { Button } from "./ui/Button";
 import { Input } from "./ui/Input";
-import type { Project, ProjectType } from "@/lib/types";
+import type { Project, ProjectType, StoreyMode } from "@/lib/types";
 
 const PRESETS = [
   {
@@ -40,12 +40,13 @@ const PRESETS = [
 export function NewProjectDialog({
   onCreate,
 }: {
-  onCreate: (p: { name: string; project_type: ProjectType; style_preset: Record<string, string> }) => Promise<Project>;
+  onCreate: (p: { name: string; project_type: ProjectType; storey_mode: StoreyMode; style_preset: Record<string, string> }) => Promise<Project>;
 }) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
   const [name, setName] = React.useState("");
   const [kind, setKind] = React.useState<ProjectType>("house");
+  const [storey, setStorey] = React.useState<StoreyMode>("single");
   const [preset, setPreset] = React.useState<typeof PRESETS[number]["id"]>("oak");
   const [busy, setBusy] = React.useState(false);
   const [err, setErr] = React.useState<string | null>(null);
@@ -57,7 +58,7 @@ export function NewProjectDialog({
     setErr(null);
     try {
       const style = PRESETS.find((p) => p.id === preset)!.style_preset;
-      const created = await onCreate({ name: name.trim(), project_type: kind, style_preset: style });
+      const created = await onCreate({ name: name.trim(), project_type: kind, storey_mode: storey, style_preset: style });
       setOpen(false);
       router.push(`/p/${created.id}/upload`);
     } catch (e: any) {
@@ -114,6 +115,35 @@ export function NewProjectDialog({
                     {v === "house"
                       ? "Opening + rooms + exterior orbit"
                       : "Opening + rooms (no exterior)"}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset className="flex flex-col gap-3">
+            <legend className="caption">Floors</legend>
+            <div className="flex gap-3">
+              {(["single", "multi"] as const).map((v) => (
+                <label
+                  key={v}
+                  className={
+                    "flex-1 cursor-pointer border px-4 py-3 text-[14px] transition-standard duration-standard " +
+                    (storey === v
+                      ? "border-ink bg-ink text-paper"
+                      : "border-ink/25 text-ink hover:border-ink/70")
+                  }
+                >
+                  <input type="radio" name="storey" value={v}
+                         checked={storey === v} onChange={() => setStorey(v)}
+                         className="sr-only" />
+                  <span className="font-display italic text-[17px] leading-none">
+                    {v === "single" ? "Single-storey" : "Multi-storey"}
+                  </span>
+                  <span className="mt-1 block text-[11px] opacity-70">
+                    {v === "single"
+                      ? "One floor plan file"
+                      : "One file per floor; add a stair"}
                   </span>
                 </label>
               ))}

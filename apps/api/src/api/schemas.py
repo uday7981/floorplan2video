@@ -20,6 +20,7 @@ class ProjectCreate(BaseModel):
     name: str = Field(min_length=1, max_length=200)
     style_preset: dict = Field(default_factory=dict)
     project_type: Literal["house", "interior"] = "house"
+    storey_mode: Literal["single", "multi"] = "single"
     budget_usd: float | None = None
 
 
@@ -27,10 +28,38 @@ class Project(BaseModel):
     id: UUID
     name: str
     project_type: Literal["house", "interior"]
+    storey_mode: Literal["single", "multi"] = "single"
     style_preset: dict
     budget_usd: float
     spent_usd: float
     status: str
+
+
+# ---- journey + boundaries (v2.0) ----
+
+class Journey(BaseModel):
+    id: UUID
+    project_id: UUID
+    plan_id: UUID
+    total_duration_s: float
+    segment_count: int
+    boundary_count: int
+    approved: bool
+
+
+class Boundary(BaseModel):
+    id: UUID
+    journey_id: UUID
+    ord: int
+    kind: Literal["cad", "photoreal"]
+    approved: bool
+    frame_path: str | None = None
+
+
+class JourneyExportRequest(BaseModel):
+    project_name: str
+    boundary_blend_frames: int = Field(default=0, ge=0, le=4)
+    captions: dict[str, str] = Field(default_factory=dict)
 
 
 # ---- plans ----

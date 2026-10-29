@@ -7,11 +7,12 @@ import { cn } from "@/lib/cn";
 type Step = { slug: string; label: string };
 
 const STEPS: Step[] = [
-  { slug: "upload", label: "Upload" },
-  { slug: "plan",   label: "Plan" },
-  { slug: "shots",  label: "Shots" },
-  { slug: "video",  label: "Video" },
-  { slug: "export", label: "Export" },
+  { slug: "upload",     label: "Upload" },
+  { slug: "plan",       label: "Plan" },
+  { slug: "journey",    label: "Journey" },
+  { slug: "boundaries", label: "Frames" },
+  { slug: "video",      label: "Video" },
+  { slug: "export",     label: "Export" },
 ];
 
 /**

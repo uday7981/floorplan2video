@@ -21,7 +21,8 @@ def create_project(body: ProjectCreate,
                    cfg = Depends(get_config)):
     budget = body.budget_usd if body.budget_usd is not None else cfg.default_project_budget_usd
     row = repo.project_create(db, user.user_id, body.name,
-                              body.style_preset, body.project_type, budget)
+                              body.style_preset, body.project_type, budget,
+                              body.storey_mode)
     return _to_project(row)
 
 
@@ -56,6 +57,7 @@ def _to_project(row: dict) -> Project:
         id=row["id"],
         name=row["name"],
         project_type=row["project_type"],
+        storey_mode=row.get("storey_mode", "single"),
         style_preset=row.get("style_preset") or {},
         budget_usd=float(row["budget_usd"]),
         spent_usd=float(row["spent_usd"]),

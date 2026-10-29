@@ -73,7 +73,9 @@ class FakeDb:
             row = {
                 "id": pid, "owner_id": params[0], "name": params[1],
                 "style_preset": {}, "project_type": params[3],
-                "budget_usd": params[4], "spent_usd": 0.0, "status": "draft",
+                "storey_mode": params[4] if len(params) >= 6 else "single",
+                "budget_usd": params[5] if len(params) >= 6 else params[4],
+                "spent_usd": 0.0, "status": "draft",
             }
             self.projects[pid] = row
             return row
